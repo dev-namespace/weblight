@@ -139,7 +139,7 @@ function highlightRect({ x, y, width, height }, offset, handler) {
   const offsetY = offset.y - padding / 2
   const d = div('', null, {
     left: px(offsetX + x), top: px(offsetY + y), width: px(width), height: px(height),
-    position: 'absolute', background: 'rgb(244, 241, 66, 0.2)', padding: px(padding),
+    position: 'absolute', background: 'rgb(244, 241, 66, 0.2)', padding: `${padding}px 0`,
     zIndex: '99999'
   })
   d.addEventListener('click', handler)
@@ -151,9 +151,13 @@ function displayHighlight({ id, range: rangeDescriptor }) {
   let nodes
   const range = rebuildRange(rangeDescriptor)
   const rects = Array.from(range.getClientRects())
-  const purgedRects = rects.filter(
-    (r1, i) => !rects.slice(i + 1).some(r2 => isRectContained(r2, r1))
-  )
+  const purgedRects = rects.reduce((acc, r1, i) => {
+    if (acc.some(r2 => isRectContained(r2, r1)) ||
+        rects.slice(i + 1).some(r2 => isRectContained(r2, r1)))
+      return acc
+    else
+      return [...acc, r1]
+  }, [])
   const offset = { x: window.scrollX, y: window.scrollY }
   const removeHandler = async (e) => {
     if (await confirm('Remove?', e)) {
