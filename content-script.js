@@ -78,7 +78,7 @@ function confirm(msg, { clientX, clientY }) {
     let d
     const okButton = button('OK', () => { remove(d); resolve(true) })
     const cancelButton = button('Cancel', () => { remove(d); resolve(false) })
-    d = div(`<strong>${msg} </strong>`, [cancelButton, okButton], {
+    d = div(`<strong>${msg}</strong><br/>`, [cancelButton, okButton], {
       background: '#fefefe', padding: px(20), position: 'absolute',
       border: '2px solid black', top: px(y), left: px(x), zIndex: '99999'
     })
@@ -125,6 +125,14 @@ function rebuildRange(rangeDescription) {
 // -------------------------
 // commands
 
+function isRectContained(r1, r2) {
+  return (
+    (r1.x <= r2.x && r1.x + r1.width >= r2.x + r2.width) &&
+    (r1.y <= r2.y && r1.y + r1.height >= r2.y + r2.height)
+  )
+
+}
+
 function highlightRect({ x, y, width, height }, offset, handler) {
   const padding = 4
   const offsetX = offset.x - padding / 2
@@ -143,6 +151,9 @@ function displayHighlight({ id, range: rangeDescriptor }) {
   let nodes
   const range = rebuildRange(rangeDescriptor)
   const rects = Array.from(range.getClientRects())
+  const purgedRects = rects.filter(
+    (r1, i) => !rects.slice(i + 1).some(r2 => isRectContained(r2, r1))
+  )
   const offset = { x: window.scrollX, y: window.scrollY }
   const removeHandler = async (e) => {
     if (await confirm('Remove?', e)) {
@@ -150,7 +161,7 @@ function displayHighlight({ id, range: rangeDescriptor }) {
       nodes.forEach(remove)
     }
   }
-  nodes = rects.map(r => highlightRect(r, offset, removeHandler))
+  nodes = purgedRects.map(r => highlightRect(r, offset, removeHandler))
 }
 
 function createHighlight(selection) {
