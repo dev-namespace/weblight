@@ -202,6 +202,7 @@ document.addEventListener('mouseup', async function handler(e) {
   if (await confirm('Highlight?', e)) {
     createHighlight(selection)
   }
+  selection.empty()
   setTimeout(
     () => document.addEventListener('mouseup', handler),
     100
