@@ -1,4 +1,42 @@
 // -------------------------
+// XPath
+
+function getXPathToElement(element) {
+  var allNodes = document.getElementsByTagName('*')
+  let segs = []
+  for (; element && element.nodeType == 1; element = element.parentNode) {
+    if (element.hasAttribute('id')) {
+      let uniqueIdCount = 0
+      for (let n=0; n < allNodes.length; n++) {
+        if (allNodes[n].hasAttribute('id') && allNodes[n].id == element.id) uniqueIdCount++
+        if (uniqueIdCount > 1) break
+      }
+      if (uniqueIdCount == 1) {
+        segs.unshift('id("' + element.getAttribute('id') + '")')
+        return segs.join('/')
+      } else {
+        segs.unshift(element.localName.toLowerCase() + '[@id="' + element.getAttribute('id') + '"]')
+      }
+    } else if (element.hasAttribute('class')) {
+      segs.unshift(element.localName.toLowerCase() + '[@class="' + element.getAttribute('class') + '"]')
+    } else {
+      for (i = 1, sib = element.previousSibling; sib; sib = sib.previousSibling)
+        if (sib.localName == element.localName)  i++
+      segs.unshift(element.localName.toLowerCase() + '[' + i + ']')
+    }
+  }
+  return segs.length ? '/' + segs.join('/') : null
+}
+
+function lookupElementByXPath(path) {
+  const evaluator = new XPathEvaluator()
+  const result = evaluator.evaluate(
+    path, document.documentElement, null,XPathResult.FIRST_ORDERED_NODE_TYPE, null
+  )
+  return result.singleNodeValue
+}
+
+// -------------------------
 // utils
 
 const debounce = (ms, fn) => {
@@ -13,6 +51,7 @@ const px = n => `${n}px`
 
 const div = (html = '', children = [], style) => {
   const d = document.createElement('div')
+  d.className = '--highlight--'
   d.innerHTML = html
   if (children) children.forEach(ch => d.appendChild(ch))
   Object.assign(d.style, style)
@@ -48,6 +87,42 @@ function confirm(msg, { clientX, clientY }) {
 }
 
 // -------------------------
+// DOM queries
+
+function serializeNode(node) {
+  if (node.nodeType === 1) return { type: 1, path: getXPathToElement(node) }
+  if (node.nodeType !== 3) throw new Exception('Unknown node type')
+  const parent = node.parentNode
+  const index = Array.from(parent.childNodes).indexOf(node)
+  const path = getXPathToElement(parent)
+  return { type: 3, index, path }
+}
+
+function serializeRange(range) {
+  const { startOffset, endOffset } = range
+  const startNode = serializeNode(range.startContainer)
+  const endNode = serializeNode(range.endContainer)
+  return { startNode, startOffset, endNode, endOffset }
+}
+
+function rebuildNode(nodeDescription) {
+  const { type, index, path } = nodeDescription
+  const node = lookupElementByXPath(path)
+  if (type === 1) return node
+  else return node.childNodes[index]
+}
+
+function rebuildRange(rangeDescription) {
+  const { startNode, startOffset, endNode, endOffset } = rangeDescription
+  const startContainer = rebuildNode(startNode)
+  const endContainer = rebuildNode(endNode)
+  const range = new Range()
+  range.setStart(startContainer, startOffset)
+  range.setEnd(endContainer, endOffset)
+  return range
+}
+
+// -------------------------
 // commands
 
 function highlightRect({ x, y, width, height }, offset, handler) {
@@ -64,12 +139,11 @@ function highlightRect({ x, y, width, height }, offset, handler) {
   return d
 }
 
-function serializeRect({ x, y, width, height }) {
-  return { x, y, width, height }
-}
-
-function displayHighlight({ id, rects, offset }) {
+function displayHighlight({ id, range: rangeDescriptor }) {
   let nodes
+  const range = rebuildRange(rangeDescriptor)
+  const rects = Array.from(range.getClientRects())
+  const offset = { x: window.scrollX, y: window.scrollY }
   const removeHandler = async (e) => {
     if (await confirm('Remove?', e)) {
       removeHighlight(id)
@@ -80,12 +154,10 @@ function displayHighlight({ id, rects, offset }) {
 }
 
 function createHighlight(selection) {
-  const range = selection.getRangeAt(0)
-  const rects = Array.from(range.getClientRects()).map(serializeRect)
-  const offset = { x: window.scrollX, y: window.scrollY }
+  const range = serializeRange(selection.getRangeAt(0))
   const text = selection.toString()
   const id = Math.random().toString(36)
-  const highlight = { id, rects, offset, text }
+  const highlight = { id, range, text }
   console.log(`* highlighted: "${text}"`)
   displayHighlight(highlight)
   persistHighlight(highlight)
@@ -114,8 +186,8 @@ function removeHighlight(targetId) {
   storeHighlights(purged)
 }
 
-function persistHighlight({ id, rects, offset }) {
-  const serializableHighlight = { id, rects, offset }
+function persistHighlight({ id, range, text }) {
+  const serializableHighlight = { id, range, text }
   const stored = retrieveHighlights()
   storeHighlights([...stored, serializableHighlight])
 }
@@ -128,7 +200,7 @@ document.addEventListener('mouseup', async function handler(e) {
   if (selection.isCollapsed) return
   document.removeEventListener('mouseup', handler)
   if (await confirm('Highlight?', e)) {
-    await createHighlight(selection)
+    createHighlight(selection)
   }
   setTimeout(
     () => document.addEventListener('mouseup', handler),
@@ -136,7 +208,15 @@ document.addEventListener('mouseup', async function handler(e) {
   )
 })
 
-window.addEventListener('load', () => {
+function restoreHighlights() {
   const highlights = retrieveHighlights()
   highlights.forEach(displayHighlight)
-})
+}
+
+window.addEventListener('load', () => setTimeout(restoreHighlights, 100))
+
+window.addEventListener('resize', debounce(10, () => {
+  const boxes = document.querySelectorAll('.--highlight--')
+  Array.from(boxes).forEach(remove)
+  restoreHighlights()
+}))
