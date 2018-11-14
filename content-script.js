@@ -1,12 +1,11 @@
 // -------------------------
-// Path
+// path
 
 function getPathToElement(el) {
   if (el.id) return `[id="${el.id}"]`
   if (el.tagName.toLowerCase() === 'body') return el.tagName
   const idx = Array.from(el.parentNode.children).indexOf(el) + 1
-  const path = `${getPathToElement(el.parentNode)} > ${el.tagName}:nth-child(${idx})`
-  return path
+  return `${getPathToElement(el.parentNode)} > ${el.tagName}:nth-child(${idx})`
 }
 
 function lookupElementByPath(path) {
@@ -40,8 +39,8 @@ const button = (label, fn) => {
   button.innerText = label
   button.addEventListener('click', fn)
   Object.assign(button.style, {
-    background: 'white', color: '#111', padding: '5px 10px', border: '2px solid black',
-    margin: px(2)
+    background: 'white', color: '#111', padding: '5px 10px',
+    border: '2px solid black', margin: px(2)
   })
   return button
 }
@@ -52,13 +51,15 @@ function confirm(msg, { clientX, clientY }) {
   const x = window.scrollX + clientX
   const y = window.scrollY + clientY
   return new Promise((resolve) => {
-    let d
-    const okButton = button('OK', () => { remove(d); resolve(true) })
-    const cancelButton = button('Cancel', () => { remove(d); resolve(false) })
-    d = div(`<strong>${msg}</strong><br/>`, [cancelButton, okButton], {
-      background: '#fefefe', padding: px(20), position: 'absolute',
-      border: '2px solid black', top: px(y), left: px(x), zIndex: '99999'
-    })
+    const d = div(
+      `<strong>${msg}</strong><br/>`, [
+        button('Cancel', () => { remove(d); resolve(false) }),
+        button('OK', () => { remove(d); resolve(true) })
+      ], {
+        background: '#fefefe', padding: px(20), position: 'absolute',
+        border: '2px solid black', top: px(y), left: px(x), zIndex: '99999'
+      }
+    )
     document.body.appendChild(d)
   })
 }
@@ -115,9 +116,9 @@ function highlightRect({ x, y, width, height }, offset, handler) {
   const offsetX = offset.x - padding / 2
   const offsetY = offset.y - padding / 2
   const d = div('', null, {
-    left: px(offsetX + x), top: px(offsetY + y), width: px(width), height: px(height),
-    position: 'absolute', background: 'rgb(244, 241, 66, 0.2)', padding: `${padding}px 0`,
-    zIndex: '99999'
+    left: px(offsetX + x), top: px(offsetY + y), zIndex: '99999',
+    width: px(width), height: px(height), background: 'rgb(244, 241, 66, 0.2)',
+    position: 'absolute', padding: `${padding}px 0`
   })
   d.addEventListener('click', handler)
   document.body.appendChild(d)
