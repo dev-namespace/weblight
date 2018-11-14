@@ -226,7 +226,10 @@ document.addEventListener('mouseup', async function handler(e) {
 
 function restoreHighlights() {
   const highlights = retrieveHighlights()
-  highlights.forEach(displayHighlight)
+  highlights.forEach(() => {
+    try { displayHighlight }
+    catch (e) { console.error(e) }
+  })
 }
 
 window.addEventListener('load', () => setTimeout(restoreHighlights, 100))
