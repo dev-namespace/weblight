@@ -145,9 +145,9 @@ function displayHighlight({ id, range: rangeDescriptor }) {
   nodes = purgedRects.map(r => highlightRect(r, offset, removeHandler))
 }
 
-function createHighlight(selection) {
-  const range = serializeRange(selection.getRangeAt(0))
-  const text = selection.toString()
+function createHighlight(selectionRange, selectionString) {
+  const range = serializeRange(selectionRange)
+  const text = selectionString
   const id = Math.random().toString(36)
   const highlight = { id, range, text }
   console.log(`* highlighted: "${text}"`)
@@ -189,10 +189,12 @@ function persistHighlight({ id, range, text }) {
 
 document.addEventListener('mouseup', async function handler(e) {
   const selection = window.getSelection()
+  const range = selection.getRangeAt(0)
+  const text = selection.toString()
   if (selection.isCollapsed) return
   document.removeEventListener('mouseup', handler)
   if (await confirm('Highlight?', e)) {
-    createHighlight(selection)
+    createHighlight(range, text)
     selection.empty()
   }
   setTimeout(
