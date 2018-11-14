@@ -1,39 +1,15 @@
 // -------------------------
-// XPath
+// path
 
-function getXPathToElement(element) {
-  var allNodes = document.getElementsByTagName('*')
-  let segs = []
-  for (; element && element.nodeType == 1; element = element.parentNode) {
-    if (element.hasAttribute('id')) {
-      let uniqueIdCount = 0
-      for (let n=0; n < allNodes.length; n++) {
-        if (allNodes[n].hasAttribute('id') && allNodes[n].id == element.id) uniqueIdCount++
-        if (uniqueIdCount > 1) break
-      }
-      if (uniqueIdCount == 1) {
-        segs.unshift('id("' + element.getAttribute('id') + '")')
-        return segs.join('/')
-      } else {
-        segs.unshift(element.localName.toLowerCase() + '[@id="' + element.getAttribute('id') + '"]')
-      }
-    } else if (element.hasAttribute('class')) {
-      segs.unshift(element.localName.toLowerCase() + '[@class="' + element.getAttribute('class') + '"]')
-    } else {
-      for (i = 1, sib = element.previousSibling; sib; sib = sib.previousSibling)
-        if (sib.localName == element.localName)  i++
-      segs.unshift(element.localName.toLowerCase() + '[' + i + ']')
-    }
-  }
-  return segs.length ? '/' + segs.join('/') : null
+function getPathToElement(el) {
+  if (el.id) return `[id="${el.id}"]`
+  if (el.tagName.toLowerCase() === 'body') return el.tagName
+  const idx = Array.from(el.parentNode.children).indexOf(el) + 1
+  return `${getPathToElement(el.parentNode)} > ${el.tagName}:nth-child(${idx})`
 }
 
-function lookupElementByXPath(path) {
-  const evaluator = new XPathEvaluator()
-  const result = evaluator.evaluate(
-    path, document.documentElement, null,XPathResult.FIRST_ORDERED_NODE_TYPE, null
-  )
-  return result.singleNodeValue
+function lookupElementByPath(path) {
+  return document.querySelector(path)
 }
 
 // -------------------------
@@ -63,8 +39,8 @@ const button = (label, fn) => {
   button.innerText = label
   button.addEventListener('click', fn)
   Object.assign(button.style, {
-    background: 'white', color: '#111', padding: '5px 10px', border: '2px solid black',
-    margin: px(2)
+    background: 'white', color: '#111', padding: '5px 10px',
+    border: '2px solid black', margin: px(2)
   })
   return button
 }
@@ -75,13 +51,15 @@ function confirm(msg, { clientX, clientY }) {
   const x = window.scrollX + clientX
   const y = window.scrollY + clientY
   return new Promise((resolve) => {
-    let d
-    const okButton = button('OK', () => { remove(d); resolve(true) })
-    const cancelButton = button('Cancel', () => { remove(d); resolve(false) })
-    d = div(`<strong>${msg}</strong><br/>`, [cancelButton, okButton], {
-      background: '#fefefe', padding: px(20), position: 'absolute',
-      border: '2px solid black', top: px(y), left: px(x), zIndex: '99999'
-    })
+    const d = div(
+      `<strong>${msg}</strong><br/>`, [
+        button('Cancel', () => { remove(d); resolve(false) }),
+        button('OK', () => { remove(d); resolve(true) })
+      ], {
+        background: '#fefefe', padding: px(20), position: 'absolute',
+        border: '2px solid black', top: px(y), left: px(x), zIndex: '99999'
+      }
+    )
     document.body.appendChild(d)
   })
 }
@@ -90,11 +68,11 @@ function confirm(msg, { clientX, clientY }) {
 // DOM queries
 
 function serializeNode(node) {
-  if (node.nodeType === 1) return { type: 1, path: getXPathToElement(node) }
+  if (node.nodeType === 1) return { type: 1, path: getPathToElement(node) }
   if (node.nodeType !== 3) throw new Exception('Unknown node type')
   const parent = node.parentNode
   const index = Array.from(parent.childNodes).indexOf(node)
-  const path = getXPathToElement(parent)
+  const path = getPathToElement(parent)
   return { type: 3, index, path }
 }
 
@@ -107,7 +85,7 @@ function serializeRange(range) {
 
 function rebuildNode(nodeDescription) {
   const { type, index, path } = nodeDescription
-  const node = lookupElementByXPath(path)
+  const node = lookupElementByPath(path)
   if (type === 1) return node
   else return node.childNodes[index]
 }
@@ -138,9 +116,9 @@ function highlightRect({ x, y, width, height }, offset, handler) {
   const offsetX = offset.x - padding / 2
   const offsetY = offset.y - padding / 2
   const d = div('', null, {
-    left: px(offsetX + x), top: px(offsetY + y), width: px(width), height: px(height),
-    position: 'absolute', background: 'rgb(244, 241, 66, 0.2)', padding: `${padding}px 0`,
-    zIndex: '99999'
+    left: px(offsetX + x), top: px(offsetY + y), zIndex: '99999',
+    width: px(width), height: px(height), background: 'rgb(244, 241, 66, 0.2)',
+    position: 'absolute', padding: `${padding}px 0`
   })
   d.addEventListener('click', handler)
   document.body.appendChild(d)
@@ -168,9 +146,9 @@ function displayHighlight({ id, range: rangeDescriptor }) {
   nodes = purgedRects.map(r => highlightRect(r, offset, removeHandler))
 }
 
-function createHighlight(selection) {
-  const range = serializeRange(selection.getRangeAt(0))
-  const text = selection.toString()
+function createHighlight(selectionRange, selectionString) {
+  const range = serializeRange(selectionRange)
+  const text = selectionString
   const id = Math.random().toString(36)
   const highlight = { id, range, text }
   console.log(`* highlighted: "${text}"`)
@@ -212,12 +190,14 @@ function persistHighlight({ id, range, text }) {
 
 document.addEventListener('mouseup', async function handler(e) {
   const selection = window.getSelection()
+  const range = selection.getRangeAt(0)
+  const text = selection.toString()
   if (selection.isCollapsed) return
   document.removeEventListener('mouseup', handler)
   if (await confirm('Highlight?', e)) {
-    createHighlight(selection)
+    createHighlight(range, text)
+    selection.empty()
   }
-  selection.empty()
   setTimeout(
     () => document.addEventListener('mouseup', handler),
     100
@@ -226,7 +206,10 @@ document.addEventListener('mouseup', async function handler(e) {
 
 function restoreHighlights() {
   const highlights = retrieveHighlights()
-  highlights.forEach(displayHighlight)
+  highlights.forEach(() => {
+    try { displayHighlight }
+    catch (e) { console.error(e) }
+  })
 }
 
 window.addEventListener('load', () => setTimeout(restoreHighlights, 100))
