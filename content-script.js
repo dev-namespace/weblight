@@ -51,15 +51,25 @@ function confirm(msg, { clientX, clientY }) {
   const x = window.scrollX + clientX
   const y = window.scrollY + clientY
   return new Promise((resolve) => {
+    const mouseDown = e => {
+      if(![...e.path].includes(document.querySelector('.--highlight--modal'))) close(false)
+    }
+    const close = resolution => {
+      document.removeEventListener('mousedown', mouseDown)
+      remove(d)
+      resolve(resolution)
+    }
     const d = div(
       `<strong>${msg}</strong><br/>`, [
-        button('Cancel', () => { remove(d); resolve(false) }),
-        button('OK', () => { remove(d); resolve(true) })
+        button('Cancel', () => close(false)),
+        button('OK', () => close(true))
       ], {
         background: '#fefefe', padding: px(20), position: 'absolute',
         border: '2px solid black', top: px(y), left: px(x), zIndex: '99999'
       }
     )
+    document.addEventListener('mousedown', mouseDown)
+    d.classList.add('--highlight--modal')
     document.body.appendChild(d)
   })
 }
