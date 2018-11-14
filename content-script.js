@@ -2,7 +2,7 @@
 // Path
 
 function getPathToElement(el) {
-  if (el.id) return `#${el.id}`
+  if (el.id) return `[id="${el.id}"]`
   if (el.tagName.toLowerCase() === 'body') return el.tagName
   const idx = Array.from(el.parentNode.children).indexOf(el) + 1
   const path = `${getPathToElement(el.parentNode)} > ${el.tagName}:nth-child(${idx})`
