@@ -216,8 +216,8 @@ document.addEventListener('mouseup', async function handler(e) {
 
 function restoreHighlights() {
   const highlights = retrieveHighlights()
-  highlights.forEach(() => {
-    try { displayHighlight }
+  highlights.forEach((highlight) => {
+    try { displayHighlight(highlight) }
     catch (e) { console.error(e) }
   })
 }
