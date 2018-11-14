@@ -1,39 +1,16 @@
 // -------------------------
-// XPath
+// Path
 
-function getXPathToElement(element) {
-  var allNodes = document.getElementsByTagName('*')
-  let segs = []
-  for (; element && element.nodeType == 1; element = element.parentNode) {
-    if (element.hasAttribute('id')) {
-      let uniqueIdCount = 0
-      for (let n=0; n < allNodes.length; n++) {
-        if (allNodes[n].hasAttribute('id') && allNodes[n].id == element.id) uniqueIdCount++
-        if (uniqueIdCount > 1) break
-      }
-      if (uniqueIdCount == 1) {
-        segs.unshift('id("' + element.getAttribute('id') + '")')
-        return segs.join('/')
-      } else {
-        segs.unshift(element.localName.toLowerCase() + '[@id="' + element.getAttribute('id') + '"]')
-      }
-    } else if (element.hasAttribute('class')) {
-      segs.unshift(element.localName.toLowerCase() + '[@class="' + element.getAttribute('class') + '"]')
-    } else {
-      for (i = 1, sib = element.previousSibling; sib; sib = sib.previousSibling)
-        if (sib.localName == element.localName)  i++
-      segs.unshift(element.localName.toLowerCase() + '[' + i + ']')
-    }
-  }
-  return segs.length ? '/' + segs.join('/') : null
+function getPathToElement(el) {
+  if (el.id) return `#${el.id}`
+  if (el.tagName.toLowerCase() === 'body') return el.tagName
+  const idx = Array.from(el.parentNode.children).indexOf(el) + 1
+  const path = `${getPathToElement(el.parentNode)} > ${el.tagName}:nth-child(${idx})`
+  return path
 }
 
-function lookupElementByXPath(path) {
-  const evaluator = new XPathEvaluator()
-  const result = evaluator.evaluate(
-    path, document.documentElement, null,XPathResult.FIRST_ORDERED_NODE_TYPE, null
-  )
-  return result.singleNodeValue
+function lookupElementByPath(path) {
+  return document.querySelector(path)
 }
 
 // -------------------------
@@ -90,11 +67,11 @@ function confirm(msg, { clientX, clientY }) {
 // DOM queries
 
 function serializeNode(node) {
-  if (node.nodeType === 1) return { type: 1, path: getXPathToElement(node) }
+  if (node.nodeType === 1) return { type: 1, path: getPathToElement(node) }
   if (node.nodeType !== 3) throw new Exception('Unknown node type')
   const parent = node.parentNode
   const index = Array.from(parent.childNodes).indexOf(node)
-  const path = getXPathToElement(parent)
+  const path = getPathToElement(parent)
   return { type: 3, index, path }
 }
 
@@ -107,7 +84,7 @@ function serializeRange(range) {
 
 function rebuildNode(nodeDescription) {
   const { type, index, path } = nodeDescription
-  const node = lookupElementByXPath(path)
+  const node = lookupElementByPath(path)
   if (type === 1) return node
   else return node.childNodes[index]
 }
