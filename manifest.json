@@ -1,18 +1,23 @@
 {
-  "name": "Remember Things",
-  "version": "1.0",
-  "description": "Spaced repetition to remember what you read.",
-  "icons": {
-    "128": "icon.png"
-  },
-  "permissions": ["activeTab"],
-  "content_scripts": [{
-    "matches": ["*://*/*"],
-    "js": ["content-script.js"]
-  }],
-  "background": {
-    "scripts": ["background.js"],
-    "persistent": false
-  },
-  "manifest_version": 2
+    "name": "Remember Things",
+    "version": "1.0",
+    "description": "Spaced repetition to remember what you read.",
+    "icons": {
+        "128": "icon.png"
+    },
+    "permissions": ["activeTab", "http://www.weblight.com", "https://www.weblight.com"],
+    "content_scripts": [{
+        "matches": ["*://*/*"],
+        "js": ["content-script.js"],
+        "css": ["modal.css"]
+    }],
+    "background": {
+        "scripts": ["background.js"],
+        "persistent": false
+    },
+    "web_accessible_resources": [
+        "modal.js",
+        "modal.css"
+    ],
+    "manifest_version": 2
 }
