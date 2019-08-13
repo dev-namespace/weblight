@@ -1,0 +1,89 @@
+.wl-modal--container{
+    width: 400px;
+    height: 100vh;
+    background-color: #f9f9f9;
+    position: fixed;
+    right: 0px;
+    top: 0px;
+    text-align: center;
+    z-index: 9999;
+
+    -webkit-box-shadow: 7px 6px 39px 5px rgba(0,0,0,0.65);
+    -moz-box-shadow: 7px 6px 39px 5px rgba(0,0,0,0.65);
+    box-shadow: 7px 6px 39px 5px rgba(0,0,0,0.65);
+}
+
+.wl-modal--container.hidden{
+    display: none;
+}
+
+.wl-modal--search{
+    margin: 0 auto;
+    width: 80%;
+    margin-top: 50px;
+    padding: 10px;
+}
+
+.wl-modal--results{
+    margin: 0 auto;
+    margin-top: 20px;
+    width: 100%;
+    padding-bottom: 5px;
+    background-color: #ffffff;
+}
+
+.wl-modal--result{
+    border-left: 5px solid rgba(244, 241, 66, 0.8);
+    border-bottom: 1px solid #f9f9f9;
+    padding: 5px 10px;
+    cursor: pointer;
+    text-decoration: none;
+    text-align: left;
+    color: #222;
+    background-color: #ffffff;
+}
+
+.wl-modal--result:hover{
+    background-color: #fdfdfd;
+}
+
+.wl-modal--result--text{
+    display: inline-block;
+    margin-left: 5px;
+    width: 80%;
+    user-select: none;
+}
+
+.wl-modal--result--icon{
+    display: inline-block;
+    width: 20px;
+    height: 100%;
+}
+
+.wl-modal--page{
+    margin-top: 5px;
+    text-align: left;
+    padding: 5px;
+    background-color: #f9f9f9;
+    cursor: pointer;
+}
+
+.wl-modal--page--header{
+    padding: 10px 0px;
+    margin-left: 10px;
+}
+
+.wl-modal--page--header--text{
+    display: inline-block;
+    margin-left: 5px;
+    width: 80%;
+    user-select: none;
+}
+
+.wl-modal--page--header--text:hover{
+    text-decoration: underline;
+}
+
+.hidden{
+    display: none;
+}

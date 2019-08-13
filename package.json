@@ -1,0 +1,28 @@
+{
+    "name": "weblight",
+    "version": "1.0.0",
+    "description": "",
+    "private": true,
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "build": "webpack",
+        "watch": "webpack -w"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/d-antesque/weblight.git"
+    },
+    "author": "",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/d-antesque/weblight/issues"
+    },
+    "homepage": "https://github.com/d-antesque/weblight#readme",
+    "devDependencies": {
+        "webpack": "^4.39.0",
+        "webpack-cli": "^3.3.6"
+    },
+    "dependencies": {
+        "eventjs": "^4.0.2"
+    }
+}
