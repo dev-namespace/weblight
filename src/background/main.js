@@ -17,28 +17,28 @@ function sendPOST(url, data, callback){ //@TODO: promise
     xhr.send(JSON.stringify(data))
 }
 
+const identity = null
+
 // -------------------------
 // commands
 
 const commands = {
     logIn: (data, callback) => {
-        console.log('sending login')
         sendPOST('http://www.weblight.com:3000/login', data, response => {
-            sessionStorage.setItem('login', data.user)
             callback && callback(response)
+            broadcastCommandMsg('applyLogin', [response.user])
         })
     },
     logOut: (data, callback) => {
-        console.log('sending logout', data, callback)
         sendPOST('http://www.weblight.com:3000/logout', data, response => {
-            console.log('got response', callback)
-            sessionStorage.removeItem('login')
             callback && callback(response)
+            broadcastCommandMsg('applyLogout', [{}])
         })
     },
     isLogged: (data, callback) => {
-        console.log('checking login', data, callback)
-        callback && callback(sessionStorage.getItem('login'))
+        sendPOST('http://www.weblight.com:3000/isLogged', [{}], response => {
+            callback && callback(response)
+        })
     },
     sendHighlight: data => {
         sendPOST('http://www.weblight.com:3000/hl/add', data)
@@ -58,17 +58,25 @@ const commands = {
     }
 }
 
+function broadcastCommandMsg(command, args){
+    chrome.tabs.query({}, function(tabs){
+        tabs.forEach(tab => {
+            chrome.tabs.sendMessage(tab.id, {type: 'command', command, args})
+        })
+    })
+}
+
 function callbackMsg(cid, args){
     chrome.tabs.query({active: true, currentWindow: true}, function(tabs){
         const msg = {type: 'callback', cid, args}
-        console.log('callback msg', msg)
+        // console.log('callback msg', msg)
         chrome.tabs.sendMessage(tabs[0].id, msg)
     })
 }
 
 chrome.runtime.onMessage.addListener(msg => {
     if(msg.type === 'command'){
-        console.log('callback:', commands[msg.command])
+        // console.log('callback:', commands[msg.command])
         if(msg.cid) msg.args.push((...args) => callbackMsg(msg.cid, args))
         commands[msg.command](...msg.args)
     }

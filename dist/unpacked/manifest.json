@@ -5,19 +5,14 @@
     "icons": {
         "128": "icon.png"
     },
-    "permissions": ["activeTab", "http://www.weblight.com", "https://www.weblight.com"],
+    "permissions": ["activeTab"],
     "content_scripts": [{
         "matches": ["*://*/*"],
-        "js": ["content-script.js"],
-        "css": ["modal.css"]
+        "js": ["content-script.js"]
     }],
     "background": {
         "scripts": ["background.js"],
         "persistent": false
     },
-    "web_accessible_resources": [
-        "modal.js",
-        "modal.css"
-    ],
     "manifest_version": 2
 }

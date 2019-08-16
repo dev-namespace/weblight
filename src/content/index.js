@@ -1,6 +1,7 @@
 import Events from 'eventjs'
 import { main } from './main'
-window.EV = new Events('test', 'renderResults')
+import '../styles/modal.scss'
+window.EV = new Events()
 
 main()
 
