@@ -12,7 +12,8 @@ export function main(){
 
     registerEventListeners()
     document.addEventListener('keydown', e => {
-        if(e.key === 'o' && e.altKey){
+       if(e.keyCode === 79 && e.altKey){
+            e.preventDefault()
             actions.modal.toggle()
             let currentInput = document.querySelector('.wl-login input') ||
                 document.querySelector('.wl-search input') // @? Better way of doing this?

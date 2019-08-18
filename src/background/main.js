@@ -22,37 +22,39 @@ const identity = null
 // -------------------------
 // commands
 
+const API_URL = 'http://134.209.200.54:3000'
+
 const commands = {
     logIn: (data, callback) => {
-        sendPOST('http://www.weblight.com:3000/login', data, response => {
+        sendPOST(`${API_URL}/login`, data, response => {
             callback && callback(response)
             broadcastCommandMsg('applyLogin', [response.user])
         })
     },
     logOut: (data, callback) => {
-        sendPOST('http://www.weblight.com:3000/logout', data, response => {
+        sendPOST(`${API_URL}/logout`, data, response => {
             callback && callback(response)
             broadcastCommandMsg('applyLogout', [{}])
         })
     },
     isLogged: (data, callback) => {
-        sendPOST('http://www.weblight.com:3000/isLogged', [{}], response => {
+        sendPOST(`${API_URL}/isLogged`, [{}], response => {
             callback && callback(response)
         })
     },
     sendHighlight: data => {
-        sendPOST('http://www.weblight.com:3000/hl/add', data)
+        sendPOST(`${API_URL}/hl/add`, data)
     },
     removeHighlight: data => {
-        sendPOST('http://www.weblight.com:3000/hl/remove', {id: data.id})
+        sendPOST(`${API_URL}/hl/remove`, {id: data.id})
     },
     searchHighlights: (data, callback) => {
-        sendPOST('http://www.weblight.com:3000/hl/search', {query: data}, response => {
+        sendPOST(`${API_URL}/hl/search`, {query: data}, response => {
             callback(response || {highlights: []})
         })
     },
     queryHighlights: (data, callback) => {
-        sendPOST('http://www.weblight.com:3000/hl/query', {query: data}, response => {
+        sendPOST(`${API_URL}/hl/query`, {query: data}, response => {
             callback(response || {highlights: []})
         })
     }
