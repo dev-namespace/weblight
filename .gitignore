@@ -2,3 +2,5 @@
 .projectile
 *.old*
 *#*
+dist
+
