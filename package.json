@@ -32,10 +32,7 @@
         "webpack-cli": "^3.3.6"
     },
     "dependencies": {
-        "eventjs": "^4.0.2",
         "flyd": "^0.2.8",
-        "preact": "^8.5.1",
-        "preact-compat": "^3.19.0",
         "react": "^16.9.0",
         "react-dom": "^16.9.0"
     }
