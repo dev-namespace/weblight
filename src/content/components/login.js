@@ -1,4 +1,5 @@
 import React from 'react'
+import { logIn } from '../api'
 
 class Login extends React.Component {
     constructor(props){
@@ -13,7 +14,8 @@ class Login extends React.Component {
     }
 
     handleSubmit(ev){
-        EV.emit('send-login', {user: this.state.user, password: this.state.pass})
+        /* EV.emit('send-login', {user: this.state.user, password: this.state.pass}) */
+        logIn({user: this.state.user, pass: this.state.pass})
         event.preventDefault()
     }
 

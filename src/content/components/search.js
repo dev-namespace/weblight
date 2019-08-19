@@ -1,10 +1,17 @@
 import React from 'react'
 import PageList from './highlightList'
 import { debounce } from '../../utils'
+import { searchHighlights } from '../api'
+import { actions } from '../db'
 
 function Search(props){
     const [query, setQuery] = React.useState('')
-    const debouncedSearch = debounce(100, query => EV.emit('search-highlights', query))
+    const search = async query => {
+        const results = await searchHighlights(query)
+        const sorted = results.sort((a, b) => b.score - a.score)
+        actions.search.setResults(sorted)
+    }
+    const debouncedSearch = debounce(400, search)
 
     const handleChange = ev => {
         setQuery(ev.target.value)
@@ -12,8 +19,8 @@ function Search(props){
     }
 
     const handleSubmit = ev => {
-        EV.emit('search-highlights', query)
         ev.preventDefault()
+        search(query)
     }
 
     return (

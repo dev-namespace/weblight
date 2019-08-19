@@ -1,6 +1,7 @@
 // -------------------------
 // import files
 import { getPathToElement, lookupElementByPath, uniqBy, debounce} from '../utils'
+import { addHighlight, removeHighlight, queryHighlights } from './api'
 
 // -------------------------
 // confirm
@@ -107,7 +108,6 @@ function isRectContained(r1, r2) {
         (r1.x <= r2.x && r1.x + r1.width >= r2.x + r2.width) &&
             (r1.y <= r2.y && r1.y + r1.height >= r2.y + r2.height)
     )
-
 }
 
 function highlightRect({ x, y, width, height }, offset, handler) {
@@ -138,7 +138,7 @@ function displayHighlight({ id, range: rangeDescriptor }) {
     const offset = { x: window.scrollX, y: window.scrollY }
     const removeHandler = async (e) => {
         if (await confirm('Remove?', e)) {
-            removeHighlight(id)
+            deleteHighlight(id)
             nodes.forEach(remove)
         }
     }
@@ -157,7 +157,7 @@ function createHighlight(selectionRange, selectionString) {
 // persistence
 
 const localStorageKey = 'highlights'
-const url = window.location.href
+const url = `${window.location.protocol}//${window.location.hostname}${window.location.pathname}`
 
 function retrieveHighlights() {
     const site = JSON.parse(localStorage.getItem(localStorageKey) || '{}')
@@ -170,11 +170,11 @@ function storeHighlights(highlights) {
     localStorage.setItem(localStorageKey, JSON.stringify(site))
 }
 
-function removeHighlight(targetId) {
+function deleteHighlight(targetId) {
     const stored = retrieveHighlights()
     const purged = stored.filter(({ id }) => id !== targetId)
     storeHighlights(purged)
-    EV.emit('command', 'removeHighlight', [{id: targetId}])
+    removeHighlight(targetId)
 }
 
 function persistHighlight({ id, range, text }) {
@@ -204,14 +204,13 @@ function sendHighlight({id, range, text}){ //@TODO: mix with persistance
     //@TODO: remove wl-modal from document before sending it's text
     const page = {url, text: document.body.textContent, title: document.title}
     const highlight = {id, range, text, url, indexable: true}
-    EV.emit('command', 'sendHighlight', [{highlight, page}])
+    addHighlight(highlight, page)
 }
 
 function fetchHighlights(){
-    return new Promise((resolve) => {
-        EV.emit('command', 'queryHighlights', [{url}], results => {
-            resolve(results.highlights)
-        })
+    return new Promise(async (resolve) => {
+        const results = await queryHighlights(url)
+        resolve(results.highlights)
     })
 }
 

@@ -1,7 +1,6 @@
 import flyd from 'flyd'
 import { merge } from '../utils'
 
-// @? Combine multiple streams? actions vs update
 const state = {
     Initial: () => ({
         identity: null,
@@ -28,7 +27,6 @@ const state = {
     })
 }
 
-// Streams
 export const updateStream = flyd.stream()
 export const stateStream = flyd.scan(merge, state.Initial(), updateStream)
 export const actions = state.Actions(updateStream)

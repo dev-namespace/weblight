@@ -1,11 +1,11 @@
 import React from 'react'
 import Login from './login'
 import Search from './search'
-
+import { logOut } from '../api'
 
 function Modal(props){
     const [state, setState] = React.useState(props.stateStream())
-    const handleLogout = () => EV.emit('send-logout')
+    const handleLogout = () => logOut()
     React.useEffect(() => props.stateStream.map((state) => setState(state)))
 
     const className = 'wl-modal wl-reset' + (state.modal.displayed ? '': ' hidden')

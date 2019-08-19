@@ -201,412 +201,6 @@ function toComment(sourceMap) {
 
 /***/ }),
 
-/***/ "./node_modules/deferjs/defer/defer.js":
-/*!*********************************************!*\
-  !*** ./node_modules/deferjs/defer/defer.js ***!
-  \*********************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-/* WEBPACK VAR INJECTION */(function(setImmediate, process) {/*
-The MIT License (MIT)
-Copyright (c) 2013 Kevin Conway
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of
-this software and associated documentation files (the "Software"), to deal in
-the Software without restriction, including without limitation the rights to
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
-of the Software, and to permit persons to whom the Software is furnished to do
-so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-*/
-
-/*jslint node: true, browser: true, indent: 2, passfail: true */
-
-module.exports = (function (context) {
-  "use strict";
-
-  var defer;
-
-  function getSetImmediate() {
-    try {
-      return setImmediate;
-    } catch (err) {
-      return false;
-    }
-  }
-
-  function getNextTick() {
-    try {
-      return process.nextTick;
-    } catch (err) {
-      return false;
-    }
-  }
-
-  // window.postMessage is refered to quite a bit in articles
-  // discussing a potential setZeroTimeout for browsers. The
-  // problem it attempts to solve is that setTimeout has a
-  // minimum wait time in all browsers. This means your function
-  // is not scheduled to run on the next cycle of the event loop
-  // but, rather, at the next cycle of the event loop after the
-  // timeout has passed.
-  //
-  // Instead, this method uses a message passing features that
-  // has been integrated into modern browsers to replicate the
-  // functionality of process.nextTick.
-  function postMessage(ctx) {
-    var queue = [],
-      message = "nextTick";
-
-    function handle(event) {
-
-      if (event.source === ctx && event.data === message) {
-
-        if (!!event.stopPropogation) {
-
-          event.stopPropogation();
-
-        }
-
-        if (queue.length > 0) {
-
-          queue.shift()();
-
-        }
-
-      }
-
-    }
-
-    if (!!ctx.addEventListener) {
-
-      ctx.addEventListener("message", handle, true);
-
-    } else {
-
-      ctx.attachEvent("onmessage", handle);
-
-    }
-
-    return function defer(fn) {
-
-      queue.push(fn);
-      ctx.postMessage(message, '*');
-
-    };
-  }
-
-  function sillyDefer(fn) {
-    setTimeout(fn, 0);
-  }
-
-  defer = defer || getSetImmediate() || undefined;
-  defer = defer || getNextTick() || undefined;
-  defer = defer || (context.window && postMessage(context.window)) || undefined;
-  defer = defer || sillyDefer;
-
-  defer.defer = defer;
-
-  function arrayFromArguments() {
-    var args = [],
-      length = arguments.length,
-      x;
-
-    for (x = 0; x < length; x = x + 1) {
-      args[x] = arguments[x];
-    }
-
-    return args;
-  }
-
-  function bindShim(fn, ctx) {
-    var boundArgs = arrayFromArguments.apply(undefined, arguments);
-
-    if (!!Function.prototype.bind) {
-      return Function.prototype.bind.apply(fn, boundArgs.slice(1));
-    }
-
-    return function bindShimWrapper() {
-      var unboundArgs = arrayFromArguments.apply(undefined, arguments);
-      return fn.apply(ctx, boundArgs.concat(unboundArgs));
-    };
-  }
-
-  defer.bind = bindShim;
-
-  return defer;
-}(this));
-
-/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../../timers-browserify/main.js */ "./node_modules/timers-browserify/main.js").setImmediate, __webpack_require__(/*! ./../../process/browser.js */ "./node_modules/process/browser.js")))
-
-/***/ }),
-
-/***/ "./node_modules/eventjs/event/event.js":
-/*!*********************************************!*\
-  !*** ./node_modules/eventjs/event/event.js ***!
-  \*********************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-/*
-The MIT License (MIT)
-Copyright (c) 2013 Kevin Conway
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of
-this software and associated documentation files (the "Software"), to deal in
-the Software without restriction, including without limitation the rights to
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
-of the Software, and to permit persons to whom the Software is furnished to do
-so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-*/
-
-/*jslint node: true, continue: true, indent: 2, passfail: true */
-
-
-module.exports = (function () {
-
-  var Modelo = __webpack_require__(/*! modelo */ "./node_modules/modelo/modelo/modelo.js"),
-    defer = __webpack_require__(/*! deferjs */ "./node_modules/deferjs/defer/defer.js"),
-    EventMixin;
-
-  // Adds a listener to the list.
-  // Private method hidden from api.
-  function appendListener(event, listener, once) {
-
-    this.events[event] = this.events[event] || [];
-    this.events[event].push({
-      "listener": listener,
-      "once": !!once
-    });
-
-    this.emit('newListener', event, listener);
-
-    if (this.events[event].length > this.maxListeners) {
-
-      console.warn('warning: possible EventEmitter memory leak detected. ',
-        this.events[event].length, ' listeners added. ',
-        'Use emitter.setMaxListeners() to increase limit. ',
-        this);
-
-    }
-
-  }
-
-  function popListeners(event, listener) {
-
-    var x, removed;
-
-    this.events[event] = this.events[event] || [];
-
-    for (x = this.events[event].length - 1; x >= 0; x = x - 1) {
-
-      if (listener !== undefined &&
-          this.events[event][x].listener !== listener) {
-
-        continue;
-
-      }
-
-      removed = this.events[event].splice(x, 1);
-      this.emit('removeListener', event, removed);
-
-    }
-
-  }
-
-  // The EventMixin object is a Modelo object that provides asynchronous
-  // events. While new instances of EventMixin can be created directly, it
-  // is intended as more of a Mix-In object that can be added to any
-  // inheritance chain.
-  EventMixin = Modelo.define(function EventMixin() {
-
-    this.events = {};
-    this.maxListeners = 10;
-
-  });
-
-  // Adds a listener to the end of the listeners array for the specified event.
-  // Returns emitter, so calls can be chained.
-  EventMixin.prototype.addListener = function addListener(event, listener) {
-
-    appendListener.call(this, event, listener, false);
-    return this;
-
-  };
-  EventMixin.prototype.on = EventMixin.prototype.addListener;
-
-  EventMixin.prototype.once = function once(event, listener) {
-
-    appendListener.call(this, event, listener, true);
-
-    return this;
-
-  };
-
-  // Remove a listener from the listener array for the specified event.
-  // Returns emitter, so calls can be chained.
-  EventMixin.prototype.removeListener = function removeListener(
-    event,
-    listener
-  ) {
-
-    // Insert empty object for listener when not given to prevent accidental
-    // removal of all listeners.
-    popListeners.call(this, event, listener || {});
-
-    return this;
-
-  };
-
-  // Removes all listeners, or those of the specified event. It's not a good
-  // idea to remove listeners that were added elsewhere in the code, especially
-  // when it's on an emitter that you didn't create.
-  // Returns emitter, so calls can be chained.
-  EventMixin.prototype.removeAllListeners = function removeAllListeners(
-    event
-  ) {
-
-    var keys,
-      length,
-      x;
-
-    if (event === undefined) {
-
-      keys = Object.keys(this.events);
-      length = keys.length;
-      for (x = 0; x < length; x = x + 1) {
-        popListeners.call(this, keys[x]);
-      }
-
-    } else {
-
-      popListeners.call(this, event);
-
-    }
-
-    return this;
-
-  };
-
-  // By default EventEmitters will print a warning if more than 10 listeners
-  // are added for a particular event. This is a useful default which helps
-  // finding memory leaks. Obviously not all Emitters should be limited to 10.
-  // This function allows that to be increased. Set to zero for unlimited.
-  EventMixin.prototype.setMaxListeners = function setMaxListeners(n) {
-
-    this.maxListeners = n;
-
-  };
-
-  // Returns an array of listeners for the specified event.
-  EventMixin.prototype.listeners = function listeners(event) {
-
-    var results = [],
-      x;
-
-    this.events[event] = this.events[event] || [];
-
-    for (x = 0; x < this.events[event].length; x = x + 1) {
-
-      results.push(this.events[event][x].listener);
-
-    }
-
-    return results;
-
-  };
-
-  // Execute each of the listeners in order with the supplied arguments.
-  // Returns true if event had listeners, false otherwise.
-  EventMixin.prototype.emit = function emit(event) {
-
-    var listenerArgs = [],
-      length = arguments.length,
-      x,
-      numberListeners,
-      remove = [];
-
-    for (x = 1; x < length; x = x + 1) {
-      listenerArgs[x - 1] = arguments[x];
-    }
-
-    this.events[event] = this.events[event] || [];
-    numberListeners = this.events[event].length;
-
-    function executeListener(listener, args) {
-
-      listener.apply(this, args);
-
-    }
-
-    length = this.events[event].length;
-    for (x = 0; x < length; x = x + 1) {
-
-      defer(
-        defer.bind(
-          executeListener,
-          this,
-          this.events[event][x].listener,
-          listenerArgs
-        )
-      );
-
-      if (this.events[event][x].once === true) {
-
-        remove.push(this.events[event][x].listener);
-
-      }
-
-    }
-
-    length = remove.length;
-    for (x = 0; x < length; x = x + 1) {
-
-      this.removeListener(event, remove[x]);
-
-    }
-
-    return numberListeners > 0;
-
-  };
-
-  // Return the number of listeners for a given event.
-  EventMixin.listenerCount = function listenerCount(emitter, event) {
-
-    return emitter.listeners(event).length;
-
-  };
-
-  return EventMixin;
-
-}());
-
-
-/***/ }),
-
 /***/ "./node_modules/flyd/lib/index.js":
 /*!****************************************!*\
   !*** ./node_modules/flyd/lib/index.js ***!
@@ -1417,185 +1011,6 @@ module.exports = flyd;
 
 /***/ }),
 
-/***/ "./node_modules/modelo/modelo/modelo.js":
-/*!**********************************************!*\
-  !*** ./node_modules/modelo/modelo/modelo.js ***!
-  \**********************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-/*
-The MIT License (MIT)
-Copyright (c) 2012 Kevin Conway
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of
-this software and associated documentation files (the "Software"), to deal in
-the Software without restriction, including without limitation the rights to
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
-of the Software, and to permit persons to whom the Software is furnished to do
-so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-*/
-
-/*jslint node: true, indent: 2, passfail: true, nomen: true */
-/*global define */
-
-
-function arrayFromArguments() {
-  var length = arguments.length,
-    args = [],
-    x;
-
-  for (x = 0; x < length; x = x + 1) {
-    args[x] = arguments[x];
-  }
-
-  return args;
-}
-
-function copyPrototype(take, give) {
-  var keys = Object.keys(give.prototype),
-    length = keys.length,
-    x;
-
-  for (x = 0; x < length; x = x + 1) {
-    take.prototype[keys[x]] = give.prototype[keys[x]];
-  }
-}
-
-function ModeloBase() {
-  return this;
-}
-
-function isInstance(self, bases, base) {
-
-  var length = bases.length,
-    x;
-
-  if (base === self) {
-    return true;
-  }
-
-  for (x = 0; x < length; x = x + 1) {
-    if (base === bases[x]) {
-      return true;
-    }
-
-    if (!!bases[x].prototype.isInstance &&
-          bases[x].prototype.isInstance(base)) {
-      return true;
-    }
-  }
-
-  return false;
-
-}
-
-function extend() {
-  return define.apply(undefined, arguments);
-}
-
-function define() {
-
-  var constructors = arrayFromArguments.apply(undefined, arguments),
-    length = constructors.length,
-    x;
-
-  function ModeloWrapper() {
-
-    var y;
-
-    for (y = 0; y < length; y = y + 1) {
-      if (arguments.length > 0) {
-        constructors[y].apply(this, arguments);
-      } else {
-        constructors[y].call(this, {});
-      }
-    }
-
-  }
-
-  for (x = 0; x < length; x = x + 1) {
-    copyPrototype(ModeloWrapper, constructors[x]);
-  }
-  if (length > 0) {
-    ModeloWrapper.constructor = constructors[length - 1].constructor;
-  }
-
-  ModeloWrapper.prototype.isInstance = isInstance.bind(
-    undefined,
-    ModeloWrapper,
-    constructors
-  );
-  ModeloWrapper.extend = extend.bind(undefined, ModeloWrapper);
-
-  return ModeloWrapper;
-
-}
-
-function inherits(child, parent) {
-
-  var constructors = [parent],
-    length,
-    x;
-
-  // This method brought to you by Node.js util module.
-  // https://github.com/joyent/node/blob/master/lib/util.js
-  child.super_ = parent;
-  child.prototype = Object.create(
-    parent.prototype,
-    {
-      constructor: {
-        value: child,
-        enumerable: false,
-        writable: true,
-        configurable: true
-      }
-    }
-  );
-
-  if (arguments.length > 2) {
-
-    constructors = arrayFromArguments.apply(undefined, arguments);
-    constructors.shift();
-    length = constructors.length;
-
-    for (x = 1; x < length; x = x + 1) {
-      copyPrototype(child, constructors[x]);
-    }
-
-  }
-
-  child.prototype.isInstance = isInstance.bind(
-    undefined,
-    child,
-    constructors
-  );
-  child.extend = extend.bind(undefined, child);
-
-  return child;
-
-}
-
-define.define = define;
-define.inherits = inherits;
-
-module.exports = define;
-
-
-/***/ }),
-
 /***/ "./node_modules/object-assign/index.js":
 /*!*********************************************!*\
   !*** ./node_modules/object-assign/index.js ***!
@@ -1694,201 +1109,6 @@ module.exports = shouldUseNative() ? Object.assign : function (target, source) {
 
 	return to;
 };
-
-
-/***/ }),
-
-/***/ "./node_modules/process/browser.js":
-/*!*****************************************!*\
-  !*** ./node_modules/process/browser.js ***!
-  \*****************************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-// shim for using process in browser
-var process = module.exports = {};
-
-// cached from whatever global is present so that test runners that stub it
-// don't break things.  But we need to wrap it in a try catch in case it is
-// wrapped in strict mode code which doesn't define any globals.  It's inside a
-// function because try/catches deoptimize in certain engines.
-
-var cachedSetTimeout;
-var cachedClearTimeout;
-
-function defaultSetTimout() {
-    throw new Error('setTimeout has not been defined');
-}
-function defaultClearTimeout () {
-    throw new Error('clearTimeout has not been defined');
-}
-(function () {
-    try {
-        if (typeof setTimeout === 'function') {
-            cachedSetTimeout = setTimeout;
-        } else {
-            cachedSetTimeout = defaultSetTimout;
-        }
-    } catch (e) {
-        cachedSetTimeout = defaultSetTimout;
-    }
-    try {
-        if (typeof clearTimeout === 'function') {
-            cachedClearTimeout = clearTimeout;
-        } else {
-            cachedClearTimeout = defaultClearTimeout;
-        }
-    } catch (e) {
-        cachedClearTimeout = defaultClearTimeout;
-    }
-} ())
-function runTimeout(fun) {
-    if (cachedSetTimeout === setTimeout) {
-        //normal enviroments in sane situations
-        return setTimeout(fun, 0);
-    }
-    // if setTimeout wasn't available but was latter defined
-    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
-        cachedSetTimeout = setTimeout;
-        return setTimeout(fun, 0);
-    }
-    try {
-        // when when somebody has screwed with setTimeout but no I.E. maddness
-        return cachedSetTimeout(fun, 0);
-    } catch(e){
-        try {
-            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
-            return cachedSetTimeout.call(null, fun, 0);
-        } catch(e){
-            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
-            return cachedSetTimeout.call(this, fun, 0);
-        }
-    }
-
-
-}
-function runClearTimeout(marker) {
-    if (cachedClearTimeout === clearTimeout) {
-        //normal enviroments in sane situations
-        return clearTimeout(marker);
-    }
-    // if clearTimeout wasn't available but was latter defined
-    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
-        cachedClearTimeout = clearTimeout;
-        return clearTimeout(marker);
-    }
-    try {
-        // when when somebody has screwed with setTimeout but no I.E. maddness
-        return cachedClearTimeout(marker);
-    } catch (e){
-        try {
-            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
-            return cachedClearTimeout.call(null, marker);
-        } catch (e){
-            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
-            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
-            return cachedClearTimeout.call(this, marker);
-        }
-    }
-
-
-
-}
-var queue = [];
-var draining = false;
-var currentQueue;
-var queueIndex = -1;
-
-function cleanUpNextTick() {
-    if (!draining || !currentQueue) {
-        return;
-    }
-    draining = false;
-    if (currentQueue.length) {
-        queue = currentQueue.concat(queue);
-    } else {
-        queueIndex = -1;
-    }
-    if (queue.length) {
-        drainQueue();
-    }
-}
-
-function drainQueue() {
-    if (draining) {
-        return;
-    }
-    var timeout = runTimeout(cleanUpNextTick);
-    draining = true;
-
-    var len = queue.length;
-    while(len) {
-        currentQueue = queue;
-        queue = [];
-        while (++queueIndex < len) {
-            if (currentQueue) {
-                currentQueue[queueIndex].run();
-            }
-        }
-        queueIndex = -1;
-        len = queue.length;
-    }
-    currentQueue = null;
-    draining = false;
-    runClearTimeout(timeout);
-}
-
-process.nextTick = function (fun) {
-    var args = new Array(arguments.length - 1);
-    if (arguments.length > 1) {
-        for (var i = 1; i < arguments.length; i++) {
-            args[i - 1] = arguments[i];
-        }
-    }
-    queue.push(new Item(fun, args));
-    if (queue.length === 1 && !draining) {
-        runTimeout(drainQueue);
-    }
-};
-
-// v8 likes predictible objects
-function Item(fun, array) {
-    this.fun = fun;
-    this.array = array;
-}
-Item.prototype.run = function () {
-    this.fun.apply(null, this.array);
-};
-process.title = 'browser';
-process.browser = true;
-process.env = {};
-process.argv = [];
-process.version = ''; // empty string to avoid regexp issues
-process.versions = {};
-
-function noop() {}
-
-process.on = noop;
-process.addListener = noop;
-process.once = noop;
-process.off = noop;
-process.removeListener = noop;
-process.removeAllListeners = noop;
-process.emit = noop;
-process.prependListener = noop;
-process.prependOnceListener = noop;
-
-process.listeners = function (name) { return [] }
-
-process.binding = function (name) {
-    throw new Error('process.binding is not supported');
-};
-
-process.cwd = function () { return '/' };
-process.chdir = function (dir) {
-    throw new Error('process.chdir is not supported');
-};
-process.umask = function() { return 0; };
 
 
 /***/ }),
@@ -31262,204 +30482,6 @@ if (false) {} else {
 
 /***/ }),
 
-/***/ "./node_modules/setimmediate/setImmediate.js":
-/*!***************************************************!*\
-  !*** ./node_modules/setimmediate/setImmediate.js ***!
-  \***************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-/* WEBPACK VAR INJECTION */(function(global, process) {(function (global, undefined) {
-    "use strict";
-
-    if (global.setImmediate) {
-        return;
-    }
-
-    var nextHandle = 1; // Spec says greater than zero
-    var tasksByHandle = {};
-    var currentlyRunningATask = false;
-    var doc = global.document;
-    var registerImmediate;
-
-    function setImmediate(callback) {
-      // Callback can either be a function or a string
-      if (typeof callback !== "function") {
-        callback = new Function("" + callback);
-      }
-      // Copy function arguments
-      var args = new Array(arguments.length - 1);
-      for (var i = 0; i < args.length; i++) {
-          args[i] = arguments[i + 1];
-      }
-      // Store and register the task
-      var task = { callback: callback, args: args };
-      tasksByHandle[nextHandle] = task;
-      registerImmediate(nextHandle);
-      return nextHandle++;
-    }
-
-    function clearImmediate(handle) {
-        delete tasksByHandle[handle];
-    }
-
-    function run(task) {
-        var callback = task.callback;
-        var args = task.args;
-        switch (args.length) {
-        case 0:
-            callback();
-            break;
-        case 1:
-            callback(args[0]);
-            break;
-        case 2:
-            callback(args[0], args[1]);
-            break;
-        case 3:
-            callback(args[0], args[1], args[2]);
-            break;
-        default:
-            callback.apply(undefined, args);
-            break;
-        }
-    }
-
-    function runIfPresent(handle) {
-        // From the spec: "Wait until any invocations of this algorithm started before this one have completed."
-        // So if we're currently running a task, we'll need to delay this invocation.
-        if (currentlyRunningATask) {
-            // Delay by doing a setTimeout. setImmediate was tried instead, but in Firefox 7 it generated a
-            // "too much recursion" error.
-            setTimeout(runIfPresent, 0, handle);
-        } else {
-            var task = tasksByHandle[handle];
-            if (task) {
-                currentlyRunningATask = true;
-                try {
-                    run(task);
-                } finally {
-                    clearImmediate(handle);
-                    currentlyRunningATask = false;
-                }
-            }
-        }
-    }
-
-    function installNextTickImplementation() {
-        registerImmediate = function(handle) {
-            process.nextTick(function () { runIfPresent(handle); });
-        };
-    }
-
-    function canUsePostMessage() {
-        // The test against `importScripts` prevents this implementation from being installed inside a web worker,
-        // where `global.postMessage` means something completely different and can't be used for this purpose.
-        if (global.postMessage && !global.importScripts) {
-            var postMessageIsAsynchronous = true;
-            var oldOnMessage = global.onmessage;
-            global.onmessage = function() {
-                postMessageIsAsynchronous = false;
-            };
-            global.postMessage("", "*");
-            global.onmessage = oldOnMessage;
-            return postMessageIsAsynchronous;
-        }
-    }
-
-    function installPostMessageImplementation() {
-        // Installs an event handler on `global` for the `message` event: see
-        // * https://developer.mozilla.org/en/DOM/window.postMessage
-        // * http://www.whatwg.org/specs/web-apps/current-work/multipage/comms.html#crossDocumentMessages
-
-        var messagePrefix = "setImmediate$" + Math.random() + "$";
-        var onGlobalMessage = function(event) {
-            if (event.source === global &&
-                typeof event.data === "string" &&
-                event.data.indexOf(messagePrefix) === 0) {
-                runIfPresent(+event.data.slice(messagePrefix.length));
-            }
-        };
-
-        if (global.addEventListener) {
-            global.addEventListener("message", onGlobalMessage, false);
-        } else {
-            global.attachEvent("onmessage", onGlobalMessage);
-        }
-
-        registerImmediate = function(handle) {
-            global.postMessage(messagePrefix + handle, "*");
-        };
-    }
-
-    function installMessageChannelImplementation() {
-        var channel = new MessageChannel();
-        channel.port1.onmessage = function(event) {
-            var handle = event.data;
-            runIfPresent(handle);
-        };
-
-        registerImmediate = function(handle) {
-            channel.port2.postMessage(handle);
-        };
-    }
-
-    function installReadyStateChangeImplementation() {
-        var html = doc.documentElement;
-        registerImmediate = function(handle) {
-            // Create a <script> element; its readystatechange event will be fired asynchronously once it is inserted
-            // into the document. Do so, thus queuing up the task. Remember to clean up once it's been called.
-            var script = doc.createElement("script");
-            script.onreadystatechange = function () {
-                runIfPresent(handle);
-                script.onreadystatechange = null;
-                html.removeChild(script);
-                script = null;
-            };
-            html.appendChild(script);
-        };
-    }
-
-    function installSetTimeoutImplementation() {
-        registerImmediate = function(handle) {
-            setTimeout(runIfPresent, 0, handle);
-        };
-    }
-
-    // If supported, we should attach to the prototype of global, since that is where setTimeout et al. live.
-    var attachTo = Object.getPrototypeOf && Object.getPrototypeOf(global);
-    attachTo = attachTo && attachTo.setTimeout ? attachTo : global;
-
-    // Don't get fooled by e.g. browserify environments.
-    if ({}.toString.call(global.process) === "[object process]") {
-        // For Node.js before 0.9
-        installNextTickImplementation();
-
-    } else if (canUsePostMessage()) {
-        // For non-IE10 modern browsers
-        installPostMessageImplementation();
-
-    } else if (global.MessageChannel) {
-        // For web workers, where supported
-        installMessageChannelImplementation();
-
-    } else if (doc && "onreadystatechange" in doc.createElement("script")) {
-        // For IE 6–8
-        installReadyStateChangeImplementation();
-
-    } else {
-        // For older browsers
-        installSetTimeoutImplementation();
-    }
-
-    attachTo.setImmediate = setImmediate;
-    attachTo.clearImmediate = clearImmediate;
-}(typeof self === "undefined" ? typeof global === "undefined" ? this : global : self));
-
-/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../webpack/buildin/global.js */ "./node_modules/webpack/buildin/global.js"), __webpack_require__(/*! ./../process/browser.js */ "./node_modules/process/browser.js")))
-
-/***/ }),
-
 /***/ "./node_modules/style-loader/dist/runtime/injectStylesIntoStyleTag.js":
 /*!****************************************************************************!*\
   !*** ./node_modules/style-loader/dist/runtime/injectStylesIntoStyleTag.js ***!
@@ -31753,151 +30775,124 @@ module.exports = function (list, options) {
 
 /***/ }),
 
-/***/ "./node_modules/timers-browserify/main.js":
-/*!************************************************!*\
-  !*** ./node_modules/timers-browserify/main.js ***!
-  \************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-/* WEBPACK VAR INJECTION */(function(global) {var scope = (typeof global !== "undefined" && global) ||
-            (typeof self !== "undefined" && self) ||
-            window;
-var apply = Function.prototype.apply;
-
-// DOM APIs, for completeness
-
-exports.setTimeout = function() {
-  return new Timeout(apply.call(setTimeout, scope, arguments), clearTimeout);
-};
-exports.setInterval = function() {
-  return new Timeout(apply.call(setInterval, scope, arguments), clearInterval);
-};
-exports.clearTimeout =
-exports.clearInterval = function(timeout) {
-  if (timeout) {
-    timeout.close();
-  }
-};
-
-function Timeout(id, clearFn) {
-  this._id = id;
-  this._clearFn = clearFn;
-}
-Timeout.prototype.unref = Timeout.prototype.ref = function() {};
-Timeout.prototype.close = function() {
-  this._clearFn.call(scope, this._id);
-};
-
-// Does not start the time, just sets up the members needed.
-exports.enroll = function(item, msecs) {
-  clearTimeout(item._idleTimeoutId);
-  item._idleTimeout = msecs;
-};
-
-exports.unenroll = function(item) {
-  clearTimeout(item._idleTimeoutId);
-  item._idleTimeout = -1;
-};
-
-exports._unrefActive = exports.active = function(item) {
-  clearTimeout(item._idleTimeoutId);
-
-  var msecs = item._idleTimeout;
-  if (msecs >= 0) {
-    item._idleTimeoutId = setTimeout(function onTimeout() {
-      if (item._onTimeout)
-        item._onTimeout();
-    }, msecs);
-  }
-};
-
-// setimmediate attaches itself to the global object
-__webpack_require__(/*! setimmediate */ "./node_modules/setimmediate/setImmediate.js");
-// On some exotic environments, it's not clear which object `setimmediate` was
-// able to install onto.  Search each possibility in the same order as the
-// `setimmediate` library.
-exports.setImmediate = (typeof self !== "undefined" && self.setImmediate) ||
-                       (typeof global !== "undefined" && global.setImmediate) ||
-                       (this && this.setImmediate);
-exports.clearImmediate = (typeof self !== "undefined" && self.clearImmediate) ||
-                         (typeof global !== "undefined" && global.clearImmediate) ||
-                         (this && this.clearImmediate);
-
-/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../webpack/buildin/global.js */ "./node_modules/webpack/buildin/global.js")))
-
-/***/ }),
-
-/***/ "./node_modules/webpack/buildin/global.js":
-/*!***********************************!*\
-  !*** (webpack)/buildin/global.js ***!
-  \***********************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-var g;
-
-// This works in non-strict mode
-g = (function() {
-	return this;
-})();
-
-try {
-	// This works if eval is allowed (see CSP)
-	g = g || new Function("return this")();
-} catch (e) {
-	// This works if the window reference is available
-	if (typeof window === "object") g = window;
-}
-
-// g can still be undefined, but nothing to do about it...
-// We return undefined, instead of nothing here, so it's
-// easier to handle this case. if(!global) { ...}
-
-module.exports = g;
-
-
-/***/ }),
-
-/***/ "./src/content/commands.js":
-/*!*********************************!*\
-  !*** ./src/content/commands.js ***!
-  \*********************************/
-/*! exports provided: commandMsg */
+/***/ "./src/content/api.js":
+/*!****************************!*\
+  !*** ./src/content/api.js ***!
+  \****************************/
+/*! exports provided: logIn, logOut, isLogged, onLogin, onLogout, searchHighlights, addHighlight, removeHighlight, queryHighlights */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "commandMsg", function() { return commandMsg; });
-const registerCallback = (cid, callback) => commandCallbacks[cid] = callback;
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "logIn", function() { return logIn; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "logOut", function() { return logOut; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "isLogged", function() { return isLogged; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "onLogin", function() { return onLogin; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "onLogout", function() { return onLogout; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "searchHighlights", function() { return searchHighlights; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "addHighlight", function() { return addHighlight; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "removeHighlight", function() { return removeHighlight; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "queryHighlights", function() { return queryHighlights; });
+/* harmony import */ var _communication_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./communication.js */ "./src/content/communication.js");
+ // const API_URL = 'http://134.209.200.54:3000'
 
-const commandCallbacks = {};
-const commands = {
-  renderResults: results => {
-    EV.emit('renderResults', results);
-  },
-  applyLogin: user => {
-    EV.emit('apply-login', user);
-  },
-  applyLogout: () => {
-    EV.emit('apply-logout');
-  }
-};
-chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
-  if (msg.type === 'command') commands[msg.command](...msg.args);else if (msg.type === 'callback') {
-    commandCallbacks[msg.cid](...msg.args);
-    delete commandCallbacks[msg.cid];
+const API_URL = 'http://www.weblight.com:3000';
+async function logIn(data) {
+  const response = await Object(_communication_js__WEBPACK_IMPORTED_MODULE_0__["sendPOST"])(`${API_URL}/login`, data);
+  Object(_communication_js__WEBPACK_IMPORTED_MODULE_0__["broadcast"])('login', {
+    user: response.user
+  });
+}
+async function logOut(data) {
+  const response = await Object(_communication_js__WEBPACK_IMPORTED_MODULE_0__["sendPOST"])(`${API_URL}/logout`, data);
+  Object(_communication_js__WEBPACK_IMPORTED_MODULE_0__["broadcast"])('logout', {});
+}
+async function isLogged() {
+  return Object(_communication_js__WEBPACK_IMPORTED_MODULE_0__["sendPOST"])(`${API_URL}/isLogged`);
+}
+function onLogin(func) {
+  Object(_communication_js__WEBPACK_IMPORTED_MODULE_0__["onBroadcast"])('login', data => func(data));
+}
+function onLogout(func) {
+  Object(_communication_js__WEBPACK_IMPORTED_MODULE_0__["onBroadcast"])('logout', func);
+}
+async function searchHighlights(query) {
+  return (await Object(_communication_js__WEBPACK_IMPORTED_MODULE_0__["sendPOST"])(`${API_URL}/hl/search`, {
+    query: {
+      search: query
+    }
+  })).results;
+}
+function addHighlight(highlight, page) {
+  return Object(_communication_js__WEBPACK_IMPORTED_MODULE_0__["sendPOST"])(`${API_URL}/hl/add`, {
+    highlight,
+    page
+  });
+}
+function removeHighlight(id) {
+  return Object(_communication_js__WEBPACK_IMPORTED_MODULE_0__["sendPOST"])(`${API_URL}/hl/remove`, {
+    id
+  });
+}
+function queryHighlights(url) {
+  //@TODO: filter by user single user in the backend
+  return Object(_communication_js__WEBPACK_IMPORTED_MODULE_0__["sendPOST"])(`${API_URL}/hl/query`, {
+    query: {
+      url
+    }
+  });
+}
+
+/***/ }),
+
+/***/ "./src/content/communication.js":
+/*!**************************************!*\
+  !*** ./src/content/communication.js ***!
+  \**************************************/
+/*! exports provided: broadcastStream, sendPOST, broadcast, onBroadcast */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "broadcastStream", function() { return broadcastStream; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "sendPOST", function() { return sendPOST; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "broadcast", function() { return broadcast; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "onBroadcast", function() { return onBroadcast; });
+/* harmony import */ var flyd__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! flyd */ "./node_modules/flyd/lib/index.js");
+/* harmony import */ var flyd__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(flyd__WEBPACK_IMPORTED_MODULE_0__);
+
+const callbacks = {};
+const broadcastStream = flyd__WEBPACK_IMPORTED_MODULE_0___default.a.stream();
+chrome.runtime.onMessage.addListener(msg => {
+  if (msg.type === 'broadcast') broadcastStream(msg.data);else if (msg.type === 'callback') {
+    if (callbacks[msg.cid]) {
+      callbacks[msg.cid](...msg.args);
+      delete callbacks[msg.cid];
+    }
   }
 });
+
 function commandMsg(command, args, callback) {
-  // console.log('command:', command, args)
   const cid = callback ? Math.random().toString(36) : undefined;
-  if (callback) registerCallback(cid, callback);
+  if (callback) callbacks[cid] = callback;
   chrome.runtime.sendMessage({
     type: 'command',
     command,
     args,
     cid
+  });
+}
+
+function sendPOST(url, data) {
+  return new Promise((resolve, reject) => commandMsg('sendPOST', [url, data], response => resolve(response)));
+}
+function broadcast(type, data) {
+  commandMsg('broadcast', [type, data]);
+} // @? should we skip this indirection and expose channel?
+
+function onBroadcast(type, func) {
+  broadcastStream.map(msg => {
+    if (msg.type === type) func(msg.data);
   });
 }
 
@@ -31922,9 +30917,6 @@ function PageList(props) {
   return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
     className: "wl-pageList"
   }, props.data && props.data.map(page => {
-    {
-      /* console.log('page-result:', page) */
-    }
     return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(HighlightPage, _extends({
       key: page.title
     }, page));
@@ -31934,6 +30926,7 @@ function PageList(props) {
 function HighlightPage(props) {
   const favicon = `https://plus.google.com/_/favicon?domain_url=${props._id.url}`;
   const [unfolded, setUnfolded] = react__WEBPACK_IMPORTED_MODULE_0___default.a.useState(false);
+  const headerText = props.title !== "" ? props.title.slice(0, 45) : props._id.url;
   return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
     className: "wl-hlPage"
   }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
@@ -31946,7 +30939,7 @@ function HighlightPage(props) {
     src: favicon
   })), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("span", {
     className: "wl-hlPage--header--text"
-  }, " ", props.title.slice(0, 45), " ")), unfolded && react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(HighlightList, {
+  }, " ", headerText, " ")), unfolded && react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(HighlightList, {
     data: props.highlights
   }));
 }
@@ -31979,6 +30972,8 @@ function HighlightList(props) {
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _api__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../api */ "./src/content/api.js");
+
 
 
 class Login extends react__WEBPACK_IMPORTED_MODULE_0___default.a.Component {
@@ -31999,9 +30994,10 @@ class Login extends react__WEBPACK_IMPORTED_MODULE_0___default.a.Component {
   }
 
   handleSubmit(ev) {
-    EV.emit('send-login', {
+    /* EV.emit('send-login', {user: this.state.user, password: this.state.pass}) */
+    Object(_api__WEBPACK_IMPORTED_MODULE_1__["logIn"])({
       user: this.state.user,
-      password: this.state.pass
+      pass: this.state.pass
     });
     event.preventDefault();
   }
@@ -32045,6 +31041,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var _login__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./login */ "./src/content/components/login.js");
 /* harmony import */ var _search__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./search */ "./src/content/components/search.js");
+/* harmony import */ var _api__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../api */ "./src/content/api.js");
+
 
 
 
@@ -32052,7 +31050,7 @@ __webpack_require__.r(__webpack_exports__);
 function Modal(props) {
   const [state, setState] = react__WEBPACK_IMPORTED_MODULE_0___default.a.useState(props.stateStream());
 
-  const handleLogout = () => EV.emit('send-logout');
+  const handleLogout = () => Object(_api__WEBPACK_IMPORTED_MODULE_3__["logOut"])();
 
   react__WEBPACK_IMPORTED_MODULE_0___default.a.useEffect(() => props.stateStream.map(state => setState(state)));
   const className = 'wl-modal wl-reset' + (state.modal.displayed ? '' : ' hidden');
@@ -32085,13 +31083,24 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var _highlightList__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./highlightList */ "./src/content/components/highlightList.js");
 /* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../utils */ "./src/utils.js");
+/* harmony import */ var _api__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../api */ "./src/content/api.js");
+/* harmony import */ var _db__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../db */ "./src/content/db.js");
+
+
 
 
 
 
 function Search(props) {
   const [query, setQuery] = react__WEBPACK_IMPORTED_MODULE_0___default.a.useState('');
-  const debouncedSearch = Object(_utils__WEBPACK_IMPORTED_MODULE_2__["debounce"])(100, query => EV.emit('search-highlights', query));
+
+  const search = async query => {
+    const results = await Object(_api__WEBPACK_IMPORTED_MODULE_3__["searchHighlights"])(query);
+    const sorted = results.sort((a, b) => b.score - a.score);
+    _db__WEBPACK_IMPORTED_MODULE_4__["actions"].search.setResults(sorted);
+  };
+
+  const debouncedSearch = Object(_utils__WEBPACK_IMPORTED_MODULE_2__["debounce"])(400, search);
 
   const handleChange = ev => {
     setQuery(ev.target.value);
@@ -32099,8 +31108,8 @@ function Search(props) {
   };
 
   const handleSubmit = ev => {
-    EV.emit('search-highlights', query);
     ev.preventDefault();
+    search(query);
   };
 
   return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
@@ -32136,7 +31145,6 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var flyd__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(flyd__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../utils */ "./src/utils.js");
 
- // @? Combine multiple streams? actions vs update
 
 const state = {
   Initial: () => ({
@@ -32180,8 +31188,7 @@ const state = {
         }
       })
     }
-  }) // Streams
-
+  })
 };
 const updateStream = flyd__WEBPACK_IMPORTED_MODULE_0___default.a.stream();
 const stateStream = flyd__WEBPACK_IMPORTED_MODULE_0___default.a.scan(_utils__WEBPACK_IMPORTED_MODULE_1__["merge"], state.Initial(), updateStream);
@@ -32200,8 +31207,10 @@ const actions = state.Actions(updateStream);
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "highlightManager", function() { return highlightManager; });
 /* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../utils */ "./src/utils.js");
+/* harmony import */ var _api__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./api */ "./src/content/api.js");
 // -------------------------
 // import files
+
  // -------------------------
 // confirm
 
@@ -32376,7 +31385,7 @@ function displayHighlight({
 
   const removeHandler = async e => {
     if (await confirm('Remove?', e)) {
-      removeHighlight(id);
+      deleteHighlight(id);
       nodes.forEach(remove);
     }
   };
@@ -32399,7 +31408,7 @@ function createHighlight(selectionRange, selectionString) {
 
 
 const localStorageKey = 'highlights';
-const url = window.location.href;
+const url = `${window.location.protocol}//${window.location.hostname}${window.location.pathname}`;
 
 function retrieveHighlights() {
   const site = JSON.parse(localStorage.getItem(localStorageKey) || '{}');
@@ -32412,15 +31421,13 @@ function storeHighlights(highlights) {
   localStorage.setItem(localStorageKey, JSON.stringify(site));
 }
 
-function removeHighlight(targetId) {
+function deleteHighlight(targetId) {
   const stored = retrieveHighlights();
   const purged = stored.filter(({
     id
   }) => id !== targetId);
   storeHighlights(purged);
-  EV.emit('command', 'removeHighlight', [{
-    id: targetId
-  }]);
+  Object(_api__WEBPACK_IMPORTED_MODULE_1__["removeHighlight"])(targetId);
 }
 
 function persistHighlight({
@@ -32477,19 +31484,13 @@ function sendHighlight({
     url,
     indexable: true
   };
-  EV.emit('command', 'sendHighlight', [{
-    highlight,
-    page
-  }]);
+  Object(_api__WEBPACK_IMPORTED_MODULE_1__["addHighlight"])(highlight, page);
 }
 
 function fetchHighlights() {
-  return new Promise(resolve => {
-    EV.emit('command', 'queryHighlights', [{
-      url
-    }], results => {
-      resolve(results.highlights);
-    });
+  return new Promise(async resolve => {
+    const results = await Object(_api__WEBPACK_IMPORTED_MODULE_1__["queryHighlights"])(url);
+    resolve(results.highlights);
   });
 } // -------------------------
 // entry point
@@ -32538,16 +31539,12 @@ const highlightManager = {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var eventjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! eventjs */ "./node_modules/eventjs/event/event.js");
-/* harmony import */ var eventjs__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(eventjs__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var _main__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./main */ "./src/content/main.js");
-/* harmony import */ var _styles_modal_scss__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../styles/modal.scss */ "./src/styles/modal.scss");
-/* harmony import */ var _styles_modal_scss__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(_styles_modal_scss__WEBPACK_IMPORTED_MODULE_2__);
+/* harmony import */ var _main__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./main */ "./src/content/main.js");
+/* harmony import */ var _styles_modal_scss__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../styles/modal.scss */ "./src/styles/modal.scss");
+/* harmony import */ var _styles_modal_scss__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_styles_modal_scss__WEBPACK_IMPORTED_MODULE_1__);
 
 
-
-window.EV = new eventjs__WEBPACK_IMPORTED_MODULE_0___default.a();
-Object(_main__WEBPACK_IMPORTED_MODULE_1__["main"])();
+Object(_main__WEBPACK_IMPORTED_MODULE_0__["main"])();
 
 /***/ }),
 
@@ -32567,9 +31564,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var react_dom__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(react_dom__WEBPACK_IMPORTED_MODULE_1__);
 /* harmony import */ var _components_modal__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./components/modal */ "./src/content/components/modal.js");
 /* harmony import */ var _db__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./db */ "./src/content/db.js");
-/* harmony import */ var _commands__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./commands */ "./src/content/commands.js");
-/* harmony import */ var _highlights__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./highlights */ "./src/content/highlights.js");
-// import buildModal from './modal'
+/* harmony import */ var _highlights__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./highlights */ "./src/content/highlights.js");
+/* harmony import */ var _api__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./api */ "./src/content/api.js");
 
 
 
@@ -32577,65 +31573,29 @@ __webpack_require__.r(__webpack_exports__);
 
 
 function main() {
-  _highlights__WEBPACK_IMPORTED_MODULE_5__["highlightManager"].start();
+  _highlights__WEBPACK_IMPORTED_MODULE_4__["highlightManager"].start();
   const container = document.body.appendChild(document.createElement('div'));
   react_dom__WEBPACK_IMPORTED_MODULE_1___default.a.render(react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(_components_modal__WEBPACK_IMPORTED_MODULE_2__["default"], {
     stateStream: _db__WEBPACK_IMPORTED_MODULE_3__["stateStream"]
   }), container);
-  registerEventListeners();
   document.addEventListener('keydown', e => {
-    if (e.key === 'o' && e.altKey) {
+    if (e.keyCode === 79 && e.altKey) {
+      e.preventDefault();
       _db__WEBPACK_IMPORTED_MODULE_3__["actions"].modal.toggle();
       let currentInput = document.querySelector('.wl-login input') || document.querySelector('.wl-search input'); // @? Better way of doing this?
 
       currentInput && currentInput.focus();
     }
   });
-  EV.emit('check-if-logged');
-
-  window.onfocus = () => {
-    EV.emit('check-if-logged');
-  }; // Debug
-  // actions.modal.toggle()
-  // EV.emit('perform-login', {user: 'namespace', password: '1234'})
-  // EV.emit('search-highlights', 'react')
-
-}
-
-function registerEventListeners() {
-  EV.on('command', (...args) => Object(_commands__WEBPACK_IMPORTED_MODULE_4__["commandMsg"])(...args));
-  EV.on('search-highlights', (query, callback) => {
-    Object(_commands__WEBPACK_IMPORTED_MODULE_4__["commandMsg"])('searchHighlights', [{
-      search: query
-    }], response => {
-      const sorted = response.results.sort((a, b) => b.score - a.score);
-      _db__WEBPACK_IMPORTED_MODULE_3__["actions"].search.setResults(sorted);
-    });
+  Object(_api__WEBPACK_IMPORTED_MODULE_5__["onLogin"])(data => {
+    _db__WEBPACK_IMPORTED_MODULE_3__["actions"].login(data.user);
   });
-  EV.on('send-login', data => {
-    Object(_commands__WEBPACK_IMPORTED_MODULE_4__["commandMsg"])('logIn', [{
-      user: data.user,
-      pass: data.password
-    }], response => {
-      if (response && response.user) EV.emit('apply-login', response.user);
-    });
-  });
-  EV.on('send-logout', data => {
-    Object(_commands__WEBPACK_IMPORTED_MODULE_4__["commandMsg"])('logOut', [{}], response => {
-      if (!response.user) EV.emit('apply-logout');
-    });
-  });
-  EV.on('check-if-logged', () => {
-    Object(_commands__WEBPACK_IMPORTED_MODULE_4__["commandMsg"])('isLogged', [{}], response => {
-      if (response && response.user) EV.emit('apply-login', response.user);else EV.emit('apply-logout');
-    });
-  });
-  EV.on('apply-logout', () => {
+  Object(_api__WEBPACK_IMPORTED_MODULE_5__["onLogout"])(() => {
     _db__WEBPACK_IMPORTED_MODULE_3__["actions"].logout();
   });
-  EV.on('apply-login', user => {
-    _db__WEBPACK_IMPORTED_MODULE_3__["actions"].login(user);
-  });
+  Object(_api__WEBPACK_IMPORTED_MODULE_5__["isLogged"])().then(data => _db__WEBPACK_IMPORTED_MODULE_3__["actions"].login(data.user)); // Debug
+  // actions.modal.toggle()
+  // logIn({user: 'debug', pass: 'debugw'})
 }
 
 /***/ }),
