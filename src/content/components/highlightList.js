@@ -1,9 +1,11 @@
 import React from 'react'
 
 function PageList(props){
+    const data = props.data.sort((a, b) => b.score - a.score)
+    data.forEach(page => page.highlights = page.highlights.sort((a, b) => b.score - a.score))
     return (
         <div className="wl-pageList">
-            {props.data && props.data.map(page => {
+            {data && data.map(page => {
                 return <HighlightPage key={page.title} {...page}/>
             })}
         </div>
