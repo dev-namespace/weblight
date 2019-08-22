@@ -31125,7 +31125,7 @@ function Search(props) {
   };
 
   react__WEBPACK_IMPORTED_MODULE_0___default.a.useEffect(() => {
-    search();
+    search(query);
   }, []);
   return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
     className: "wl-search"

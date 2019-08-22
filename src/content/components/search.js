@@ -22,7 +22,7 @@ function Search(props){
         search(query)
     }
 
-    React.useEffect(() => {search()}, [])
+    React.useEffect(() => {search(query)}, [])
 
     return (
         <div className="wl-search">
