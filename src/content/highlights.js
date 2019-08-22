@@ -201,8 +201,9 @@ async function restoreHighlights() {
 
 function sendHighlight({id, range, text}){ //@TODO: mix with persistance
     //@TODO: we don't want to send page text every highlight, check if exists in local storage?
-    //@TODO: remove wl-modal from document before sending it's text
-    const page = {url, text: document.body.textContent, title: document.title}
+    const bodyClone = document.body.cloneNode(true)
+    bodyClone.querySelector('.wl-modal').remove()
+    const page = {url, text: bodyClone.textContent, title: document.title}
     const highlight = {id, range, text, url, indexable: true}
     addHighlight(highlight, page)
 }
