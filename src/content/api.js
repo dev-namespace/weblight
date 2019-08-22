@@ -29,6 +29,10 @@ export async function searchHighlights(query){
     return (await sendPOST(`${API_URL}/hl/search`, {query: {search: query}})).results
 }
 
+export async function getLastHighlights(){
+    return (await sendPOST(`${API_URL}/hl/last`, {})).results.reverse()
+}
+
 export function addHighlight(highlight, page){
     return sendPOST(`${API_URL}/hl/add`, {highlight, page})
 }

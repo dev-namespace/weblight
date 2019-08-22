@@ -30779,7 +30779,7 @@ module.exports = function (list, options) {
 /*!****************************!*\
   !*** ./src/content/api.js ***!
   \****************************/
-/*! exports provided: logIn, logOut, isLogged, onLogin, onLogout, searchHighlights, addHighlight, removeHighlight, queryHighlights */
+/*! exports provided: logIn, logOut, isLogged, onLogin, onLogout, searchHighlights, getLastHighlights, addHighlight, removeHighlight, queryHighlights */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -30790,6 +30790,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "onLogin", function() { return onLogin; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "onLogout", function() { return onLogout; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "searchHighlights", function() { return searchHighlights; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getLastHighlights", function() { return getLastHighlights; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "addHighlight", function() { return addHighlight; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "removeHighlight", function() { return removeHighlight; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "queryHighlights", function() { return queryHighlights; });
@@ -30822,6 +30823,9 @@ async function searchHighlights(query) {
       search: query
     }
   })).results;
+}
+async function getLastHighlights() {
+  return (await Object(_communication_js__WEBPACK_IMPORTED_MODULE_0__["sendPOST"])(`${API_URL}/hl/last`, {})).results.reverse();
 }
 function addHighlight(highlight, page) {
   return Object(_communication_js__WEBPACK_IMPORTED_MODULE_0__["sendPOST"])(`${API_URL}/hl/add`, {
@@ -30914,9 +30918,16 @@ function _extends() { _extends = Object.assign || function (target) { for (var i
 
 
 function PageList(props) {
+  let data = props.data;
+
+  if (props.sorted) {
+    data = props.data.sort((a, b) => b.score - a.score);
+    data.forEach(page => page.highlights = page.highlights.sort((a, b) => b.score - a.score));
+  }
+
   return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
     className: "wl-pageList"
-  }, props.data && props.data.map(page => {
+  }, data && data.map(page => {
     return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(HighlightPage, _extends({
       key: page.title
     }, page));
@@ -31093,18 +31104,19 @@ __webpack_require__.r(__webpack_exports__);
 
 function Search(props) {
   const [query, setQuery] = react__WEBPACK_IMPORTED_MODULE_0___default.a.useState('');
+  const [empty, setEmpty] = react__WEBPACK_IMPORTED_MODULE_0___default.a.useState(true);
 
   const search = async query => {
-    const results = await Object(_api__WEBPACK_IMPORTED_MODULE_3__["searchHighlights"])(query);
-    const sorted = results.sort((a, b) => b.score - a.score);
-    _db__WEBPACK_IMPORTED_MODULE_4__["actions"].search.setResults(sorted);
+    const results = query.length === 0 ? await Object(_api__WEBPACK_IMPORTED_MODULE_3__["getLastHighlights"])() : await Object(_api__WEBPACK_IMPORTED_MODULE_3__["searchHighlights"])(query);
+    _db__WEBPACK_IMPORTED_MODULE_4__["actions"].search.setResults(results);
   };
 
   const debouncedSearch = Object(_utils__WEBPACK_IMPORTED_MODULE_2__["debounce"])(400, search);
 
   const handleChange = ev => {
     setQuery(ev.target.value);
-    if (ev.target.value.length > 3) debouncedSearch(event.target.value);
+    setEmpty(ev.target.value.length === 0);
+    debouncedSearch(ev.target.value); //@? debounce whitin component state?
   };
 
   const handleSubmit = ev => {
@@ -31112,6 +31124,9 @@ function Search(props) {
     search(query);
   };
 
+  react__WEBPACK_IMPORTED_MODULE_0___default.a.useEffect(() => {
+    search();
+  }, []);
   return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
     className: "wl-search"
   }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("form", {
@@ -31121,7 +31136,8 @@ function Search(props) {
     placeholder: "Search",
     onChange: handleChange
   }), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(_highlightList__WEBPACK_IMPORTED_MODULE_1__["default"], {
-    data: props.results
+    data: props.results,
+    sorted: !empty
   })));
 }
 
@@ -31471,10 +31487,11 @@ function sendHighlight({
 }) {
   //@TODO: mix with persistance
   //@TODO: we don't want to send page text every highlight, check if exists in local storage?
-  //@TODO: remove wl-modal from document before sending it's text
+  const bodyClone = document.body.cloneNode(true);
+  bodyClone.querySelector('.wl-modal').remove();
   const page = {
     url,
-    text: document.body.textContent,
+    text: bodyClone.textContent,
     title: document.title
   };
   const highlight = {
