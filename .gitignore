@@ -2,4 +2,8 @@
 .projectile
 *.old*
 *#*
+dist/unpacked/content-script.js
+dist/unpacked/content-script.js.map
+dist/unpacked/background.js
+dist/unpacked/background.js.map
 
