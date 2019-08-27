@@ -33,10 +33,20 @@
     text-align: center;
     z-index: 9999;
     font-family: Roboto;
+    overflow: scroll;
 
     -webkit-box-shadow: 7px 6px 39px 5px rgba(0,0,0,0.65);
     -moz-box-shadow: 7px 6px 39px 5px rgba(0,0,0,0.65);
     box-shadow: 7px 6px 39px 5px rgba(0,0,0,0.65);
+
+    &::-webkit-scrollbar {
+        width: 0px;  /* Remove scrollbar space */
+        background: transparent;  /* Optional: just make scrollbar invisible */
+    }
+    /* Optional: show position indicator in red */
+    &::-webkit-scrollbar-thumb {
+        background: #FF0000;
+}
 
     h2{
         font-size: 18px;
@@ -74,17 +84,32 @@
         height: 40px;
     }
 
-    .wl-search input{
-        margin: 0 auto;
-        width: 80%;
-        margin-top: 50px;
-        padding: 10px;
+    .wl-search {
     }
 
+    .wl-search--form{
+        margin: 0 auto;
+        width: 80%;
+    }
+
+    .wl-search input{
+        width: 100%;
+        margin-top: 50px;
+        padding: 10px;
+        box-sizing: border-box;
+    }
+
+    .wl-search select{
+        background-color: #f1f1f1;
+        float: right;
+        width: 100px;
+        height: 20px;
+        margin-top: 5px;
+    }
 
     .wl-pageList{
         margin: 0 auto;
-        margin-top: 40px;
+        margin-top: 60px;
         width: 100%;
         padding-bottom: 5px;
         background-color: #ffffff;
@@ -155,10 +180,20 @@
             background-color: #fdfdfd;
         }
     }
-
 }
 
 .hidden{
     display: none;
+}
+
+.stop-scrolling {
+    overflow: hidden;
+}
+
+.hide-scrollbar{
+    &::-webkit-scrollbar {
+        width: 0px;  /* Remove scrollbar space */
+        background: transparent;  /* Optional: just make scrollbar invisible */
+    }
 }
 

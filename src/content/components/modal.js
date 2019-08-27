@@ -7,10 +7,16 @@ function Modal(props){
     const [state, setState] = React.useState(props.stateStream())
     const handleLogout = () => logOut()
     React.useEffect(() => props.stateStream.map((state) => setState(state)))
+    React.useEffect(() => {
+        if(state.modal.displayed) document.body.classList.add('hide-scrollbar')
+        else document.body.classList.remove('hide-scrollbar')
+    })
+    const mouseOver = () => document.body.classList.add('stop-scrolling')
+    const mouseOut = () => document.body.classList.remove('stop-scrolling')
 
     const className = 'wl-modal wl-reset' + (state.modal.displayed ? '': ' hidden')
     return (
-        <div className={className}>
+        <div className={className} onMouseOver={mouseOver} onMouseOut={mouseOut}>
             {!state.identity &&
              <Login/>}
 
