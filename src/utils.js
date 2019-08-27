@@ -58,3 +58,8 @@ export const uniqBy = (arr, predicate) => {
         return map
     }, new Map()).values()]
 }
+
+export const maxBy = (arr, key, initial = -Infinity) => {
+  return arr.reduce((acc, x) => x[key] > acc ? x[key] : acc, initial)
+}
+

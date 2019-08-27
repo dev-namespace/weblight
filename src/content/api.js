@@ -1,4 +1,5 @@
 import { sendPOST, broadcast, onBroadcast } from './communication.js'
+import { maxBy } from '../utils'
 
 // const API_URL = 'http://134.209.200.54:3000'
 const API_URL = 'http://www.weblight.com:3000'
@@ -25,12 +26,18 @@ export function onLogout(func){
     onBroadcast('logout', func)
 }
 
+function formatResults(results){ //@TODO: inmutable
+    results.forEach(page => page.highlights.forEach(hl => hl.date = new Date(hl.date)))
+    results.forEach(page => page.date = maxBy(page.highlights, 'date', new Date('January 1, 1900 00:00:00')))
+    return results
+}
+
 export async function searchHighlights(query){
-    return (await sendPOST(`${API_URL}/hl/search`, {query: {search: query}})).results
+    return formatResults((await sendPOST(`${API_URL}/hl/search`, {query: {search: query}})).results)
 }
 
 export async function getLastHighlights(){
-    return (await sendPOST(`${API_URL}/hl/last`, {})).results.reverse()
+    return formatResults((await sendPOST(`${API_URL}/hl/last`, {})).results.reverse())
 }
 
 export function addHighlight(highlight, page){
