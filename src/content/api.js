@@ -48,8 +48,8 @@ export function removeHighlight(id){
     return sendPOST(`${API_URL}/hl/remove`, {id})
 }
 
-export function queryHighlights(url){ //@TODO: filter by user single user in the backend
-    return sendPOST(`${API_URL}/hl/query`, {query: {url}})
+export function getHighlights(url){ //@TODO: filter by user single user in the backend
+    return sendPOST(`${API_URL}/hl/get`, {url})
 }
 
 

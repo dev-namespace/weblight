@@ -4,6 +4,7 @@ import Modal from './components/modal'
 import { actions, stateStream } from './db'
 import { highlightManager } from './highlights'
 import { onLogin, onLogout, isLogged, logIn } from './api'
+import { clearHighlights, restoreHighlights } from './highlights'
 
 export function main(){
     highlightManager.start()
@@ -20,9 +21,20 @@ export function main(){
         }
     })
 
-    onLogin(data => { actions.login(data.user)})
-    onLogout(() => { actions.logout()})
-    isLogged().then(data => actions.login(data.user))
+    const handleLogin = data => {
+        actions.login(data.user)
+        clearHighlights()
+        restoreHighlights()
+    }
+
+    const handleLogout = () => {
+        actions.logout()
+        clearHighlights()
+    }
+
+    onLogin(handleLogin)
+    onLogout(handleLogout)
+    isLogged().then(handleLogin)
 
     // Debug
     // actions.modal.toggle()
