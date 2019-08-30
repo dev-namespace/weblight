@@ -204,7 +204,6 @@ export async function restoreHighlights() {
 // back-end
 
 function sendHighlight({id, range, text}){ //@TODO: mix with persistance
-    //@TODO: we don't want to send page text every highlight, check if exists in local storage?
     const date = new Date()
     const bodyClone = document.body.cloneNode(true)
     bodyClone.querySelector('.wl-modal').remove()
@@ -215,8 +214,9 @@ function sendHighlight({id, range, text}){ //@TODO: mix with persistance
 
 function fetchHighlights(){
     return new Promise(async (resolve) => {
-        const results = await getHighlights(url)
-        resolve(results.highlights)
+        const response = await getHighlights(url)
+        const results = response ? response.highlights : []
+        resolve(results)
     })
 }
 
