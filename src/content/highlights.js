@@ -1,6 +1,6 @@
 // -------------------------
 // import files
-import { getPathToElement, lookupElementByPath, uniqBy, debounce} from '../utils'
+import { getPathToElement, lookupElementByPath, uniqBy, debounce, getZIndex} from '../utils'
 import { addHighlight, removeHighlight, getHighlights } from './api'
 
 // -------------------------
@@ -110,12 +110,12 @@ function isRectContained(r1, r2) {
     )
 }
 
-function highlightRect({ x, y, width, height }, offset, handler) {
+function highlightRect({ x, y, width, height }, offset, zIndex = 'auto', handler) {
     const padding = 4
     const offsetX = offset.x - padding / 2
     const offsetY = offset.y - padding / 2
     const d = div('', null, {
-        left: px(offsetX + x), top: px(offsetY + y), zIndex: '99999',
+        left: px(offsetX + x), top: px(offsetY + y), zIndex: zIndex,
         width: px(width), height: px(height), background: 'rgb(244, 241, 66, 0.2)',
         position: 'absolute', padding: `${padding}px 0`
     })
@@ -127,6 +127,8 @@ function highlightRect({ x, y, width, height }, offset, handler) {
 function displayHighlight({ _id: id, range: rangeDescriptor }) {
     let nodes
     const range = rebuildRange(rangeDescriptor)
+    const ancestor = range.commonAncestorContainer
+    const zIndex = ancestor.nodeType === 1 ? getZIndex(ancestor) : getZIndex(ancestor.parentNode)
     const rects = Array.from(range.getClientRects())
     const purgedRects = rects.reduce((acc, r1, i) => {
         if (acc.some(r2 => isRectContained(r2, r1)) ||
@@ -142,7 +144,7 @@ function displayHighlight({ _id: id, range: rangeDescriptor }) {
             nodes.forEach(remove)
         }
     }
-    nodes = purgedRects.map(r => highlightRect(r, offset, removeHandler))
+    nodes = purgedRects.map(r => highlightRect(r, offset, zIndex, removeHandler))
 }
 
 function createHighlight(selectionRange, selectionString) {
