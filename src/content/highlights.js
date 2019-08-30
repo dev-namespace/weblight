@@ -232,10 +232,11 @@ function start(){
         if (selection.isCollapsed) return
         document.removeEventListener('mouseup', handler)
         if (await confirm('Highlight?', e)) {
-            let highlight = createHighlight(range, text)
-            //@TODO: check send, then display and persist
-            displayHighlight(highlight)
-            sendHighlight(highlight)
+            if(text !== '' && text !== "\n"){
+                let highlight = createHighlight(range, text)
+                displayHighlight(highlight)
+                sendHighlight(highlight)
+            }
             selection.empty()
         }
         setTimeout(
@@ -243,7 +244,6 @@ function start(){
             100
         )
     })
-    // window.addEventListener('load', () => setTimeout(restoreHighlights, 100))
     window.addEventListener('resize', debounce(10, () => {
         const boxes = document.querySelectorAll('.--highlight--')
         Array.from(boxes).forEach(remove)
