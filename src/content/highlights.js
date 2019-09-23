@@ -124,7 +124,7 @@ function highlightRect({ x, y, width, height }, offset, zIndex = 'auto', handler
     return d
 }
 
-function displayHighlight({ _id: id, range: rangeDescriptor }) {
+function displayHighlight({ _id, range: rangeDescriptor }) {
     let nodes
     const range = rebuildRange(rangeDescriptor)
     const ancestor = range.commonAncestorContainer
@@ -140,7 +140,7 @@ function displayHighlight({ _id: id, range: rangeDescriptor }) {
     const offset = { x: window.scrollX, y: window.scrollY }
     const removeHandler = async (e) => {
         if (await confirm('Remove?', e)) {
-            removeHighlight(id)
+            removeHighlight(_id)
             nodes.forEach(remove)
         }
     }
@@ -150,8 +150,8 @@ function displayHighlight({ _id: id, range: rangeDescriptor }) {
 function createHighlight(selectionRange, selectionString) {
     const range = serializeRange(selectionRange)
     const text = selectionString
-    const id = Math.random().toString(36)
-    const highlight = { id, range, text }
+    const _id = Math.random().toString(36)
+    const highlight = { _id, range, text }
     return highlight
 }
 
@@ -205,12 +205,12 @@ export async function restoreHighlights() {
 // -------------------------
 // back-end
 
-function sendHighlight({id, range, text}){ //@TODO: mix with persistance
+function sendHighlight({_id, range, text}){ //@TODO: mix with persistance
     const date = new Date()
     const bodyClone = document.body.cloneNode(true)
     bodyClone.querySelector('.wl-modal').remove()
     const page = {url, text: bodyClone.textContent, title: document.title}
-    const highlight = {id, range, text, url, indexable: true, date}
+    const highlight = {_id, range, text, url, indexable: true, date}
     addHighlight(highlight, page)
 }
 

@@ -49,8 +49,9 @@
 }
 
     h2{
-        font-size: 18px;
-        font-weight: 600;
+        font-family: Playfair Display;
+        font-size: 28px;
+        font-weight: 700;
     }
 
     &--identity{
@@ -65,8 +66,45 @@
     .wl-login{
         padding-top: 20px;
 
+        &--logo{
+            margin-bottom: 20px;
+        }
+
+        &--signup-text{
+            margin-top: 30px;
+        }
+
+        &--button{
+            background-color: #444;
+            color: #f1f1f1;
+            width: 80%;
+            padding: 12px 20px;
+            box-sizing: border-box;
+            cursor: pointer;
+
+            &:hover{
+                background-color: #444;
+                color: #f1f1f1;
+                width: 80%;
+                padding: 12px 20px;
+                box-sizing: border-box;
+                cursor: pointer;
+            }
+        }
+
         form{
-            margin-top: 60px;
+            margin-top: 0px;
+        }
+
+        &--error{
+            color: red;
+            width: 80%;
+            margin: 20px auto;
+        }
+
+        &--link{
+            color: #999;
+            text-decoration: underline;
         }
     }
 

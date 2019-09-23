@@ -5,6 +5,7 @@ import { actions, stateStream } from './db'
 import { highlightManager } from './highlights'
 import { onLogin, onLogout, isLogged, logIn } from './api'
 import { clearHighlights, restoreHighlights } from './highlights'
+import { signUp, signIn } from './auth'
 
 export function main(){
     highlightManager.start()
