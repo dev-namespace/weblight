@@ -4,6 +4,8 @@ import Modal from './components/modal'
 import { actions, stateStream } from './db'
 import { highlightManager } from './highlights'
 import { onLogin, onLogout, isLogged, logIn } from './api'
+import { clearHighlights, restoreHighlights } from './highlights'
+import { signUp, signIn } from './auth'
 
 export function main(){
     highlightManager.start()
@@ -11,7 +13,7 @@ export function main(){
     ReactDOM.render(<Modal stateStream={stateStream}/>, container)
 
     document.addEventListener('keydown', e => {
-       if(e.keyCode === 79 && e.altKey){
+        if((e.keyCode === 79 || e.keyCode === 87) && e.altKey){
             e.preventDefault()
             actions.modal.toggle()
             let currentInput = document.querySelector('.wl-login input') ||
@@ -20,9 +22,20 @@ export function main(){
         }
     })
 
-    onLogin(data => { actions.login(data.user)})
-    onLogout(() => { actions.logout()})
-    isLogged().then(data => actions.login(data.user))
+    const handleLogin = data => {
+        actions.login(data.user)
+        clearHighlights()
+        restoreHighlights()
+    }
+
+    const handleLogout = () => {
+        actions.logout()
+        clearHighlights()
+    }
+
+    onLogin(handleLogin)
+    onLogout(handleLogout)
+    isLogged().then(handleLogin)
 
     // Debug
     // actions.modal.toggle()

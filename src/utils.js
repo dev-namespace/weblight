@@ -58,3 +58,15 @@ export const uniqBy = (arr, predicate) => {
         return map
     }, new Map()).values()]
 }
+
+export const maxBy = (arr, key, initial = -Infinity) => {
+  return arr.reduce((acc, x) => x[key] > acc ? x[key] : acc, initial)
+}
+
+export const getZIndex = node => {
+  const value = document.defaultView.getComputedStyle(node).getPropertyValue('z-index')
+  if(value !== 'auto') return value
+  if(!node.parentNode) return value
+  if(node === document.body) return value
+  return getZIndex(node.parentNode)
+}

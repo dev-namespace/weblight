@@ -8,7 +8,8 @@ const state = {
             displayed: false
         },
         search:{
-            results: []
+            results: [],
+            refresh: false
         }
     }),
     Actions: (update) => ({
@@ -22,7 +23,9 @@ const state = {
             toggle: () => update({modal: {displayed: x => !x}})
         },
         search:{
-            setResults: results => update({search: {results: results}})
+            setResults: results => update({search: {results: results}}),
+            askRefresh: () => update({search: {refresh: true}}),
+            confirmRefresh: () => update({search: {refresh: false}})
         }
     })
 }

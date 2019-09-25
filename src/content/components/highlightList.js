@@ -1,9 +1,10 @@
 import React from 'react'
 
 function PageList(props){
+    let data =  props.data
     return (
         <div className="wl-pageList">
-            {props.data && props.data.map(page => {
+            {data && data.map(page => {
                 return <HighlightPage key={page.title} {...page}/>
             })}
         </div>

@@ -1,7 +1,8 @@
 // -------------------------
 // import files
-import { getPathToElement, lookupElementByPath, uniqBy, debounce} from '../utils'
-import { addHighlight, removeHighlight, queryHighlights } from './api'
+import { getPathToElement, lookupElementByPath, uniqBy, debounce, getZIndex} from '../utils'
+import { addHighlight, removeHighlight, getHighlights } from './api'
+import { actions } from './db'
 
 // -------------------------
 // confirm
@@ -110,12 +111,12 @@ function isRectContained(r1, r2) {
     )
 }
 
-function highlightRect({ x, y, width, height }, offset, handler) {
+function highlightRect({ x, y, width, height }, offset, zIndex = 'auto', handler) {
     const padding = 4
     const offsetX = offset.x - padding / 2
     const offsetY = offset.y - padding / 2
     const d = div('', null, {
-        left: px(offsetX + x), top: px(offsetY + y), zIndex: '99999',
+        left: px(offsetX + x), top: px(offsetY + y), zIndex: zIndex,
         width: px(width), height: px(height), background: 'rgb(244, 241, 66, 0.2)',
         position: 'absolute', padding: `${padding}px 0`
     })
@@ -124,9 +125,11 @@ function highlightRect({ x, y, width, height }, offset, handler) {
     return d
 }
 
-function displayHighlight({ id, range: rangeDescriptor }) {
+function displayHighlight({ _id, range: rangeDescriptor }) {
     let nodes
     const range = rebuildRange(rangeDescriptor)
+    const ancestor = range.commonAncestorContainer
+    const zIndex = ancestor.nodeType === 1 ? getZIndex(ancestor) : getZIndex(ancestor.parentNode)
     const rects = Array.from(range.getClientRects())
     const purgedRects = rects.reduce((acc, r1, i) => {
         if (acc.some(r2 => isRectContained(r2, r1)) ||
@@ -138,23 +141,30 @@ function displayHighlight({ id, range: rangeDescriptor }) {
     const offset = { x: window.scrollX, y: window.scrollY }
     const removeHandler = async (e) => {
         if (await confirm('Remove?', e)) {
-            deleteHighlight(id)
+            removeHighlight(_id)
             nodes.forEach(remove)
+            actions.search.askRefresh()
         }
     }
-    nodes = purgedRects.map(r => highlightRect(r, offset, removeHandler))
+    nodes = purgedRects.map(r => highlightRect(r, offset, zIndex, removeHandler))
 }
 
 function createHighlight(selectionRange, selectionString) {
     const range = serializeRange(selectionRange)
     const text = selectionString
-    const id = Math.random().toString(36)
-    const highlight = { id, range, text }
+    const _id = Math.random().toString(36)
+    const highlight = { _id, range, text }
     return highlight
 }
 
+export function clearHighlights(){
+    // displayedHighlights.forEach(hl => hl.nodes.forEach(remove))
+    const boxes = document.querySelectorAll('.--highlight--')
+    Array.from(boxes).forEach(remove)
+}
+
 // -------------------------
-// persistence
+// local Storage
 
 const localStorageKey = 'highlights'
 const url = `${window.location.protocol}//${window.location.hostname}${window.location.pathname}`
@@ -174,7 +184,6 @@ function deleteHighlight(targetId) {
     const stored = retrieveHighlights()
     const purged = stored.filter(({ id }) => id !== targetId)
     storeHighlights(purged)
-    removeHighlight(targetId)
 }
 
 function persistHighlight({ id, range, text }) {
@@ -183,34 +192,36 @@ function persistHighlight({ id, range, text }) {
     storeHighlights([...stored, serializableHighlight])
 }
 
-async function restoreHighlights() {
-    let highlights = retrieveHighlights()
-    if(true){ //@TODO: if database connection or whatever
-        const serverHighlights = await fetchHighlights()
-        highlights = uniqBy([...highlights, ...serverHighlights], 'id')
+export async function restoreHighlights() {
+    if(document.readyState === 'complete') {
+        const highlights = await fetchHighlights()
+        highlights.forEach((highlight) => {
+            try { displayHighlight(highlight) }
+            catch (e) { console.error(e) }
+        })
+    } else {
+        setTimeout(restoreHighlights, 100)
     }
-    highlights.forEach((highlight) => {
-        try { displayHighlight(highlight) }
-        catch (e) { console.error(e) }
-    })
 }
-
 
 // -------------------------
 // back-end
 
-function sendHighlight({id, range, text}){ //@TODO: mix with persistance
-    //@TODO: we don't want to send page text every highlight, check if exists in local storage?
-    //@TODO: remove wl-modal from document before sending it's text
-    const page = {url, text: document.body.textContent, title: document.title}
-    const highlight = {id, range, text, url, indexable: true}
-    addHighlight(highlight, page)
+async function sendHighlight({_id, range, text}){ //@TODO: mix with persistance
+    const date = new Date()
+    const bodyClone = document.body.cloneNode(true)
+    bodyClone.querySelector('.wl-modal').remove()
+    const page = {url, text: bodyClone.textContent, title: document.title}
+    const highlight = {_id, range, text, url, indexable: true, date}
+    await addHighlight(highlight, page)
+    actions.search.askRefresh()
 }
 
 function fetchHighlights(){
     return new Promise(async (resolve) => {
-        const results = await queryHighlights(url)
-        resolve(results.highlights)
+        const response = await getHighlights(url)
+        const results = response ? response.highlights : []
+        resolve(results)
     })
 }
 
@@ -226,11 +237,11 @@ function start(){
         if (selection.isCollapsed) return
         document.removeEventListener('mouseup', handler)
         if (await confirm('Highlight?', e)) {
-            let highlight = createHighlight(range, text)
-            //@TODO: check send, then display and persist
-            displayHighlight(highlight)
-            persistHighlight(highlight)
-            sendHighlight(highlight)
+            if(text !== '' && text !== "\n"){
+                let highlight = createHighlight(range, text)
+                displayHighlight(highlight)
+                sendHighlight(highlight)
+            }
             selection.empty()
         }
         setTimeout(
@@ -238,9 +249,6 @@ function start(){
             100
         )
     })
-
-    window.addEventListener('load', () => setTimeout(restoreHighlights, 100))
-
     window.addEventListener('resize', debounce(10, () => {
         const boxes = document.querySelectorAll('.--highlight--')
         Array.from(boxes).forEach(remove)
