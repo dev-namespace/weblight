@@ -29,6 +29,7 @@ function Search(props){
     }
 
     React.useEffect(() => {search(query)}, [])
+    if(props.refresh) search(query).then(() => actions.search.confirmRefresh())
 
     const sorted = sort(props.results, orderMetric)
     return (

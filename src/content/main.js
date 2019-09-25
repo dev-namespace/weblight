@@ -13,7 +13,7 @@ export function main(){
     ReactDOM.render(<Modal stateStream={stateStream}/>, container)
 
     document.addEventListener('keydown', e => {
-       if(e.keyCode === 79 && e.altKey){
+        if((e.keyCode === 79 || e.keyCode === 87) && e.altKey){
             e.preventDefault()
             actions.modal.toggle()
             let currentInput = document.querySelector('.wl-login input') ||

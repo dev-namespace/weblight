@@ -1,8 +1,8 @@
 import { sendPOST, broadcast, onBroadcast } from './communication.js'
 import { maxBy } from '../utils'
 
-// const API_URL = 'http://134.209.200.54:3000'
-const API_URL = 'http://www.weblight.com:3000'
+const API_URL = 'http://134.209.200.54:3000'
+// const API_URL = 'http://www.weblight.com:3000'
 
 export async function logIn(data){
     const response = await sendPOST(`${API_URL}/login`, data)

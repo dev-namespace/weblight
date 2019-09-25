@@ -2,6 +2,7 @@
 // import files
 import { getPathToElement, lookupElementByPath, uniqBy, debounce, getZIndex} from '../utils'
 import { addHighlight, removeHighlight, getHighlights } from './api'
+import { actions } from './db'
 
 // -------------------------
 // confirm
@@ -142,6 +143,7 @@ function displayHighlight({ _id, range: rangeDescriptor }) {
         if (await confirm('Remove?', e)) {
             removeHighlight(_id)
             nodes.forEach(remove)
+            actions.search.askRefresh()
         }
     }
     nodes = purgedRects.map(r => highlightRect(r, offset, zIndex, removeHandler))
@@ -205,13 +207,14 @@ export async function restoreHighlights() {
 // -------------------------
 // back-end
 
-function sendHighlight({_id, range, text}){ //@TODO: mix with persistance
+async function sendHighlight({_id, range, text}){ //@TODO: mix with persistance
     const date = new Date()
     const bodyClone = document.body.cloneNode(true)
     bodyClone.querySelector('.wl-modal').remove()
     const page = {url, text: bodyClone.textContent, title: document.title}
     const highlight = {_id, range, text, url, indexable: true, date}
-    addHighlight(highlight, page)
+    await addHighlight(highlight, page)
+    actions.search.askRefresh()
 }
 
 function fetchHighlights(){

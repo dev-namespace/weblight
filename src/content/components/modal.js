@@ -27,7 +27,7 @@ function Modal(props){
             }
 
             {state.identity &&
-             <Search results={state.search.results}/>
+             <Search results={state.search.results} refresh={state.search.refresh}/>
             }
         </div>
     )

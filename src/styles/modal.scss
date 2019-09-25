@@ -21,6 +21,14 @@
     img{
         all: unset;
     }
+    select{
+        font-size: 13px;
+    }
+    input[type="password"]
+    {
+        all: unset;
+    }
+
 }
 
 .wl-modal{
@@ -115,11 +123,35 @@
         text-indent: 20px;
     }
 
+
+    input[type="password"]{
+        background-color: #f1f1f1;
+        border: 1px solid #bbb;
+        text-align: left;
+        text-indent: 20px;
+
+        &:focus{
+            border-color: #bbb;
+        }
+
+        &::placeholder{
+            color: #999;
+        }
+    }
+
     .wl-login input{
         display: block;
         margin: 20px auto;
         width: 80%;
         height: 40px;
+
+        &:focus{
+            border-color: #bbb;
+        }
+
+        &::placeholder{
+            color: #999;
+        }
     }
 
     .wl-search {
