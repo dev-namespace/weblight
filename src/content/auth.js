@@ -49,3 +49,34 @@ export function signIn(username, password){
         })
     })
 }
+
+export function recoverPassword(username){
+    console.log('[*] Attempting to recover password for user', username)
+    return new Promise((res, rej) => {
+        const user = new CognitoUser({Username: username, Pool: userPool})
+        user.forgotPassword({
+            onSuccess: result => {
+                console.log('result:', result)
+                res()
+            },
+            onFailure: err => {
+                console.log('error recovering password:', err)
+            },
+        })
+    })
+}
+
+export function confirmPassword(username, code, password){
+    return new Promise((res, rej) => {
+        const user = new CognitoUser({Username: username, Pool: userPool})
+        user.confirmPassword(code, password, {
+            onSuccess: result => {
+                console.log('result:', result)
+                res()
+            },
+            onFailure: err => {
+                console.log('error recovering password:', err)
+            },
+        })
+    })
+}
