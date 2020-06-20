@@ -27,7 +27,6 @@ export function broadcast(type, data){
     commandMsg('broadcast', [type, data])
 }
 
-// @? should we skip this indirection and expose channel?
 export function onBroadcast(type, func){
     broadcastStream.map(msg => {if(msg.type === type) func(msg.data)})
 }

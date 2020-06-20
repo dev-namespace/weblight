@@ -3,6 +3,8 @@ import { merge } from '../utils'
 
 const state = {
     Initial: () => ({
+        //@TODO rename: online
+        offline: false,
         identity: null,
         modal:{
             displayed: false
@@ -13,10 +15,13 @@ const state = {
         }
     }),
     Actions: (update) => ({
-        update: (state) => update(state),
-        login: (user) => update({identity: user}),
-        logout: () => {
-            update({identity: null, search: {results: []}})
+        update: async (state) => await update(state),
+        login: async (user) => await update({identity: user}),
+        logout: async () => {
+            await update({identity: null, search: {results: []}, offline: false})
+        },
+        setOfflineMode: async (value) => {
+            await update({offline: value})
         },
         modal: {
             display: () => update({modal: {displayed: true}}),
@@ -24,12 +29,14 @@ const state = {
         },
         search:{
             setResults: results => update({search: {results: results}}),
-            askRefresh: () => update({search: {refresh: true}}),
+            refresh: () => update({search: {refresh: true}}),
             confirmRefresh: () => update({search: {refresh: false}})
         }
     })
 }
 
+export const getIdentity = () => stateStream()['identity']
+export const isOnline = () => !stateStream()['offline']
 export const updateStream = flyd.stream()
-export const stateStream = flyd.scan(merge, state.Initial(), updateStream)
+export const stateStream = flyd.scan(merge, state.Initial(), updateStream) // current state stream
 export const actions = state.Actions(updateStream)

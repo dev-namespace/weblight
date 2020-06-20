@@ -2,7 +2,8 @@ const path = require('path')
 
 module.exports = {
     mode: 'development',
-    devtool: 'cheap-module-source-map',
+    // devtool: 'cheap-module-source-map',
+    devtool: 'eval-source-map', // remove eval permissions from manifesto when production!
     entry: {
         'unpacked/content-script': './src/content/index.js',
         'unpacked/background': './src/background/main.js',

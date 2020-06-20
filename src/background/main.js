@@ -8,7 +8,8 @@ function sendPOST(url, data, callback){
     xhr.onreadystatechange = function () {
         if(xhr.readyState === 4 ){
             if(xhr.status === 200){
-                if(callback) callback(JSON.parse(xhr.response))
+                const response = xhr.response === "" ? "{}" : xhr.response
+                if(callback) callback(JSON.parse(response))
             } else {
                 if(callback) callback(undefined)
             }

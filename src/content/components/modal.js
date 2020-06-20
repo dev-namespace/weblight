@@ -17,18 +17,20 @@ function Modal(props){
     const className = 'wl-modal wl-reset' + (state.modal.displayed ? '': ' hidden')
     return (
         <div className={className} onMouseOver={mouseOver} onMouseOut={mouseOut}>
-            {!state.identity &&
-             <Login/>}
+          {state.offline &&
+           <div className="wl-offline-tag"> offline </div>}
+          {!state.identity &&
+           <Login/>}
 
-            {state.identity &&
-             <div className="wl-modal--identity">
-                 {state.identity} (<a href="#" onClick={handleLogout}>logout</a>)
-             </div>
-            }
+          {state.identity &&
+           <div className="wl-modal--identity">
+             {state.identity} (<a href="#" onClick={handleLogout}>logout</a>)
+           </div>
+          }
 
-            {state.identity &&
-             <Search results={state.search.results} refresh={state.search.refresh}/>
-            }
+          {state.identity &&
+           <Search results={state.search.results} refresh={state.search.refresh}/>
+          }
         </div>
     )
 }
