@@ -2,7 +2,7 @@
 
 A chrome extension for persistent highlighting of web content.
 
-![Imgur](https://imgur.com/MCgStQu)
+![Weblight screenshot](./media/screenshot.png)
 
 ### Features
 - Persitent highlighting in multiple colors.
